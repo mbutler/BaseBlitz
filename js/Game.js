@@ -6,7 +6,8 @@ BaseBlitz.Game.prototype = {
     create: function () {
         this.map = this.game.add.tilemap('map1');
         this.map.addTilesetImage('8x3-stone', '8x3-stone');
-        this.map.addTilesetImage('statue', 'statue');
+       this.map.addTilesetImage('statue', 'statue');
+        
                 
         this.backgroundlayer = this.map.createLayer('backgroundLayer');
         this.blockedLayer = this.map.createLayer('blockedLayer');
@@ -18,8 +19,30 @@ BaseBlitz.Game.prototype = {
         //this.createItems();  
         //create player
         //var result = this.findObjectsByType('playerStart', this.map, 'objectsLayer')
-        this.player = this.game.add.sprite(78, 80, 'player');
+        
+        this.statue = this.game.add.sprite(277, 380, 'statue');
+        this.player = this.game.add.sprite(77, 80, 'player');
         this.game.physics.arcade.enable(this.player);
+        this.player.body.velocity.x = 0;
+        this.player.body.velocity.y = 0;
+        
+        
+        this.player.moveRight = function () {
+            this.x += 75;
+        };
+        
+        this.player.moveLeft = function () {
+            this.x -= 75;
+        };
+        
+        this.player.moveUp = function () {
+            this.y -= 75;
+        };
+        
+        this.player.moveDown = function () {
+            this.y += 75;
+        };
+        
         
         //the camera will follow the player in the world
         this.game.camera.follow(this.player);
@@ -55,7 +78,7 @@ BaseBlitz.Game.prototype = {
     },    
     
     //create a sprite from an object
-    createFromTiledObject: function(element, group) {
+    createFromTiledObject: function (element, group) {
         var sprite = group.create(element.x, element.y, element.properties.sprite);
 
           //copy all properties to the sprite
@@ -64,30 +87,18 @@ BaseBlitz.Game.prototype = {
           });
     },
     
+
     update: function() {
         
         //collision, needs to go before cursors check or only last check works
-        this.game.physics.arcade.collide(this.player, this.blockedLayer);
+        //console.log(this.game.physics.arcade.overlap(this.player, this.blockedLayer));
+        console.log(Phaser.Rectangle.intersects(this.player, this.statue));
         
         //player movement
-        this.player.body.velocity.y = 0;
-        this.player.body.velocity.x = 0;
-
-        if(this.cursors.up.isDown) {
-          this.player.body.velocity.y -= 50;
-        }
-        else if(this.cursors.down.isDown) {
-          this.player.body.velocity.y += 50;
-        }
-        if(this.cursors.left.isDown) {
-          this.player.body.velocity.x -= 50;
-        }
-        else if(this.cursors.right.isDown) {
-          this.player.body.velocity.x += 50;          
-        }
-        
-        
-        
+        this.cursors.right.onDown.add(this.player.moveRight, this.player); 
+        this.cursors.left.onDown.add(this.player.moveLeft, this.player);
+        this.cursors.up.onDown.add(this.player.moveUp, this.player);
+        this.cursors.down.onDown.add(this.player.moveDown, this.player);        
         
   },
     

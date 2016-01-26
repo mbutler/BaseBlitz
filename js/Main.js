@@ -1,6 +1,6 @@
 var BaseBlitz = BaseBlitz || {};
 
-BaseBlitz.game = new Phaser.Game(500, 500, Phaser.AUTO, '');
+BaseBlitz.game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, 'container');
 BaseBlitz.game.state.add('Boot', BaseBlitz.Boot);
 BaseBlitz.game.state.add('Preload', BaseBlitz.Preload);
 BaseBlitz.game.state.add('Game', BaseBlitz.Game);
