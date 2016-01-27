@@ -1,7 +1,6 @@
 var BaseBlitz = BaseBlitz || {};
 
 BaseBlitz.Game = function () {};
-
 BaseBlitz.Game.prototype = {
     create: function () {
         this.map = this.game.add.tilemap('map1');
@@ -10,17 +9,17 @@ BaseBlitz.Game.prototype = {
         
                 
         this.backgroundlayer = this.map.createLayer('backgroundLayer');
-        this.blockedLayer = this.map.createLayer('blockedLayer');
+        //this.blockedLayer = this.map.createLayer('blockedLayer');
         
-        this.map.setCollisionByExclusion([], true, 'blockedLayer');
+        //this.map.setCollisionByExclusion([], true, 'blockedLayer');
         
         this.backgroundlayer.resizeWorld();
  
-        //this.createItems();  
+        this.createItems('statueObject');  
         //create player
         //var result = this.findObjectsByType('playerStart', this.map, 'objectsLayer')
         
-        this.statue = this.game.add.sprite(277, 380, 'statue');
+        //this.statue = this.game.add.sprite(375, 375, 'statue');
         this.player = this.game.add.sprite(77, 80, 'player');
         this.game.physics.arcade.enable(this.player);
         this.player.body.velocity.x = 0;
@@ -51,12 +50,12 @@ BaseBlitz.Game.prototype = {
         this.cursors = this.game.input.keyboard.createCursorKeys();
     },
     
-    createItems: function(type) {
+    createItems: function(kind) {
         //create items
         this.items = this.game.add.group();
         this.items.enableBody = true;
         var item;    
-        result = this.findObjectsByType(type, this.map, 'objectsLayer');
+        result = this.findObjectsByType(kind, this.map, 'objectsLayer');
         result.forEach(function(element){
           this.createFromTiledObject(element, this.items);
         }, this);
@@ -84,6 +83,7 @@ BaseBlitz.Game.prototype = {
           //copy all properties to the sprite
           Object.keys(element.properties).forEach(function(key){
             sprite[key] = element.properties[key];
+              console.log(sprite.type);
           });
     },
     
@@ -92,7 +92,7 @@ BaseBlitz.Game.prototype = {
         
         //collision, needs to go before cursors check or only last check works
         //console.log(this.game.physics.arcade.overlap(this.player, this.blockedLayer));
-        console.log(Phaser.Rectangle.intersects(this.player, this.statue));
+        //console.log(Phaser.Rectangle.intersects(this.player, this.sprite.properties["statueObject"]));
         
         //player movement
         this.cursors.right.onDown.add(this.player.moveRight, this.player); 
