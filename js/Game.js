@@ -1,51 +1,63 @@
 var BaseBlitz = BaseBlitz || {};
 
 BaseBlitz.Game = function () {};
-BaseBlitz.lastMove = '';
+
 BaseBlitz.Game.prototype = {
+    
+    init: function () {
+        this.lastMove = '';
+        this.tx = 0;
+        this.ty = 0;
+    },
+    
     create: function () {
+        
         this.map = this.game.add.tilemap('map1');
         this.map.addTilesetImage('8x3-stone', '8x3-stone');
-        this.map.addTilesetImage('statue', 'statue');
-        
+        this.map.addTilesetImage('statue', 'statue');        
                 
         this.backgroundlayer = this.map.createLayer('backgroundLayer');
-        //this.blockedLayer = this.map.createLayer('blockedLayer');
-        
-        //this.map.setCollisionByExclusion([], true, 'blockedLayer');
-        
         this.backgroundlayer.resizeWorld();
  
         this.createItems('statueObject', 'objectsLayer');  
-        //create player
-        //var result = this.findObjectsByType('playerStart', this.map, 'objectsLayer')
-        
-        //this.statue = this.game.add.sprite(375, 375, 'statue');
+
         this.player = this.game.add.sprite(77, 80, 'player');
+        
+        this.tx = this.math.snapToFloor(this.player.x, 75) / 75;
+        this.ty = this.math.snapToFloor(this.player.y, 75) / 75;
+        
         this.game.physics.arcade.enable(this.player);
-        this.player.body.velocity.x = 0;
-        this.player.body.velocity.y = 0;
-        
-        
         
         this.player.moveRight = function () {
             lastMove = 'right';            
-            this.x += 75;            
+            this.x += 75; 
+            this.tx = this.game.math.snapToFloor(this.x, 75) / 75;
+            this.ty = this.game.math.snapToFloor(this.y, 75) / 75;
+            console.log("x:"+this.tx+", "+"y:"+this.ty);
         };
         
         this.player.moveLeft = function () {
             lastMove = 'left';
             this.x -= 75;
+            this.tx = this.game.math.snapToFloor(this.x, 75) / 75;
+            this.ty = this.game.math.snapToFloor(this.y, 75) / 75;
+            console.log("x:"+this.tx+", "+"y:"+this.ty);
         };
         
         this.player.moveUp = function () {
             lastMove = 'up';
             this.y -= 75;
+            this.tx = this.game.math.snapToFloor(this.x, 75) / 75;
+            this.ty = this.game.math.snapToFloor(this.y, 75) / 75;
+            console.log("x:"+this.tx+", "+"y:"+this.ty);
         };
         
         this.player.moveDown = function () {
             lastMove = 'down';
             this.y += 75;
+            this.tx = this.game.math.snapToFloor(this.x, 75) / 75;
+            this.ty = this.game.math.snapToFloor(this.y, 75) / 75;
+            console.log("x:"+this.tx+", "+"y:"+this.ty);
         };
         
         
@@ -54,6 +66,7 @@ BaseBlitz.Game.prototype = {
 
         //move player with cursor keys
         this.cursors = this.game.input.keyboard.createCursorKeys();
+                
     },
     
     createItems: function(kind, layer) {
@@ -72,9 +85,6 @@ BaseBlitz.Game.prototype = {
         var result = new Array();
         map.objects[layer].forEach(function(element){
           if(element.properties.type === type) {
-            //Phaser uses top left, Tiled bottom left so we have to adjust
-            //also keep in mind that the cup images are a bit smaller than the tile which is 16x16
-            //so they might not be placed in the exact position as in Tiled
             element.y -= map.tileHeight;
             result.push(element);
           }      
@@ -94,9 +104,11 @@ BaseBlitz.Game.prototype = {
     },
     
     itemOverlap: function(player, item) {
-        console.log(lastMove);
-        //console.log(item.type);
-        //item.kill();
+            //item.kill();
+            this.tx = this.math.snapToFloor(this.player.x, 75) / 75;
+            this.ty = this.math.snapToFloor(this.player.y, 75) / 75;
+            var tile = this.map.getTile(this.tx, this.ty, this.backgroundlayer.index, true);
+            console.log(tile.index);
         switch(lastMove) {
             case 'left':
                 this.player.x += 75;                
@@ -111,14 +123,12 @@ BaseBlitz.Game.prototype = {
                 this.player.y -= 75;
                 break;
         }
-    },    
+    },       
 
     update: function() {
         
         this.game.physics.arcade.overlap(this.player, this.items, this.itemOverlap, null, this);
         //collision, needs to go before cursors check or only last check works
-        //console.log(this.game.physics.arcade.overlap(this.player, this.blockedLayer));
-        //console.log(Phaser.Rectangle.intersects(this.player, this.sprite.properties["statueObject"]));
         
         //player movement
         this.cursors.right.onDown.add(this.player.moveRight, this.player); 
