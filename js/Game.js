@@ -3,6 +3,7 @@ var BaseBlitz = BaseBlitz || {};
 BaseBlitz.Game = function () {
     
     TILE_SIZE = 75;
+    
 };
 
 BaseBlitz.Game.prototype = {
@@ -11,27 +12,31 @@ BaseBlitz.Game.prototype = {
     
     
     create: function () {   
-        console.log(this);
         
         //create tilemap and set up layers
         this.map = this.game.add.tilemap('map1');
         this.map.addTilesetImage('8x3-stone', '8x3-stone');
+        //tileset 'statue' in Tiled
         this.map.addTilesetImage('statue', 'statue');  
         this.backgroundlayer = this.map.createLayer('backgroundLayer');
         this.backgroundlayer.resizeWorld();
- 
-        this.createItems('statueObject', 'objectsLayer');  
+        
+        //type 'statue' in Tiled custom properties
+        this.createItems('statue', 'objectsLayer');  
 
         this.player = this.game.add.sprite(77, 80, 'player');
-        this.game.physics.arcade.enable(this.player);
-        this.game.camera.follow(this.player);
-        this.player.lastMove = '';
+        this.player.map = this.map;
+        this.player.lastMove = '';  
         
-        //get tile coordinates for wherever player is at
+        this.game.physics.arcade.enable(this.player);
+        this.game.camera.follow(this.player);  
+
+        //get tile coordinates for player location
         this.player.getCoords = function () {
             var tx = this.game.math.snapToFloor(this.x, TILE_SIZE) / TILE_SIZE;
             var ty = this.game.math.snapToFloor(this.y, TILE_SIZE) / TILE_SIZE;
-            console.log("x:"+tx+", "+"y:"+ty);
+            var tile = this.map.getTile(tx, ty, 0, true); //layer index 0, backgroundlayer
+            console.log ("x:"+tx+", "+"y:"+ty+","+" tile #"+tile.index);           
         };
         
         //direction controller//
@@ -67,7 +72,7 @@ BaseBlitz.Game.prototype = {
         this.items = this.game.add.group();
         this.items.enableBody = true;
         var result = this.findObjectsByType(kind, this.map, layer);
-        result.forEach(function(element){
+        result.forEach(function (element) {
           this.createFromTiledObject(element, this.items);
         }, this);
     },
@@ -90,7 +95,6 @@ BaseBlitz.Game.prototype = {
           //copy all properties to the sprite
           Object.keys(element.properties).forEach(function(key){
             sprite[key] = element.properties[key];
-              //console.log(sprite.type);
           });
     },
     
@@ -116,9 +120,8 @@ BaseBlitz.Game.prototype = {
                 break;
         }
     },       
-
+    
     update: function () {
-        //collision, needs to go before cursors check or only last check works
         this.game.physics.arcade.overlap(this.player, this.items, this.itemOverlap, null, this);
         
         //player movement
