@@ -1,80 +1,72 @@
 var BaseBlitz = BaseBlitz || {};
 
-BaseBlitz.Game = function () {};
+BaseBlitz.Game = function () {
+    
+    TILE_SIZE = 75;
+};
 
 BaseBlitz.Game.prototype = {
     
-    init: function () {
-        this.lastMove = '';
-        this.tx = 0;
-        this.ty = 0;
-    },
+    init: function () {},  
     
-    create: function () {
+    
+    create: function () {   
+        console.log(this);
         
+        //create tilemap and set up layers
         this.map = this.game.add.tilemap('map1');
         this.map.addTilesetImage('8x3-stone', '8x3-stone');
-        this.map.addTilesetImage('statue', 'statue');        
-                
+        this.map.addTilesetImage('statue', 'statue');  
         this.backgroundlayer = this.map.createLayer('backgroundLayer');
         this.backgroundlayer.resizeWorld();
  
         this.createItems('statueObject', 'objectsLayer');  
 
         this.player = this.game.add.sprite(77, 80, 'player');
-        
-        this.tx = this.math.snapToFloor(this.player.x, 75) / 75;
-        this.ty = this.math.snapToFloor(this.player.y, 75) / 75;
-        
         this.game.physics.arcade.enable(this.player);
+        this.game.camera.follow(this.player);
+        this.player.lastMove = '';
+        
+        //get tile coordinates for wherever player is at
+        this.player.getCoords = function () {
+            var tx = this.game.math.snapToFloor(this.x, TILE_SIZE) / TILE_SIZE;
+            var ty = this.game.math.snapToFloor(this.y, TILE_SIZE) / TILE_SIZE;
+            console.log("x:"+tx+", "+"y:"+ty);
+        };
+        
+        //direction controller//
+        this.cursors = this.game.input.keyboard.createCursorKeys();
         
         this.player.moveRight = function () {
-            lastMove = 'right';            
-            this.x += 75; 
-            this.tx = this.game.math.snapToFloor(this.x, 75) / 75;
-            this.ty = this.game.math.snapToFloor(this.y, 75) / 75;
-            console.log("x:"+this.tx+", "+"y:"+this.ty);
+            this.lastMove = 'right';            
+            this.x += TILE_SIZE; 
+            this.getCoords();
         };
         
         this.player.moveLeft = function () {
-            lastMove = 'left';
-            this.x -= 75;
-            this.tx = this.game.math.snapToFloor(this.x, 75) / 75;
-            this.ty = this.game.math.snapToFloor(this.y, 75) / 75;
-            console.log("x:"+this.tx+", "+"y:"+this.ty);
+            this.lastMove = 'left';
+            this.x -= TILE_SIZE;
+            this.getCoords();
         };
         
         this.player.moveUp = function () {
-            lastMove = 'up';
-            this.y -= 75;
-            this.tx = this.game.math.snapToFloor(this.x, 75) / 75;
-            this.ty = this.game.math.snapToFloor(this.y, 75) / 75;
-            console.log("x:"+this.tx+", "+"y:"+this.ty);
+            this.lastMove = 'up';
+            this.y -= TILE_SIZE;
+            this.getCoords();
         };
         
         this.player.moveDown = function () {
-            lastMove = 'down';
-            this.y += 75;
-            this.tx = this.game.math.snapToFloor(this.x, 75) / 75;
-            this.ty = this.game.math.snapToFloor(this.y, 75) / 75;
-            console.log("x:"+this.tx+", "+"y:"+this.ty);
-        };
-        
-        
-        //the camera will follow the player in the world
-        this.game.camera.follow(this.player);
-
-        //move player with cursor keys
-        this.cursors = this.game.input.keyboard.createCursorKeys();
+            this.lastMove = 'down';
+            this.y += TILE_SIZE;
+            this.getCoords();
+        };  
                 
-    },
+    },    
     
-    createItems: function(kind, layer) {
-        //create items
+    createItems: function (kind, layer) { 
         this.items = this.game.add.group();
         this.items.enableBody = true;
-        var item;    
-        result = this.findObjectsByType(kind, this.map, layer);
+        var result = this.findObjectsByType(kind, this.map, layer);
         result.forEach(function(element){
           this.createFromTiledObject(element, this.items);
         }, this);
@@ -95,7 +87,6 @@ BaseBlitz.Game.prototype = {
     //create a sprite from an object
     createFromTiledObject: function (element, group) {
         var sprite = group.create(element.x, element.y, element.properties.sprite);
-
           //copy all properties to the sprite
           Object.keys(element.properties).forEach(function(key){
             sprite[key] = element.properties[key];
@@ -103,32 +94,32 @@ BaseBlitz.Game.prototype = {
           });
     },
     
-    itemOverlap: function(player, item) {
-            //item.kill();
-            this.tx = this.math.snapToFloor(this.player.x, 75) / 75;
-            this.ty = this.math.snapToFloor(this.player.y, 75) / 75;
-            var tile = this.map.getTile(this.tx, this.ty, this.backgroundlayer.index, true);
-            console.log(tile.index);
-        switch(lastMove) {
+    //callback from overlap function
+    itemOverlap: function (player, item) {
+        var tx = this.math.snapToFloor(player.x, TILE_SIZE) / TILE_SIZE;
+        var ty = this.math.snapToFloor(player.y, TILE_SIZE) / TILE_SIZE;
+        var tile = this.map.getTile(tx, ty, this.backgroundlayer.index, true);
+        console.log("collision with "+item.type);
+        
+        switch (player.lastMove) {
             case 'left':
-                this.player.x += 75;                
+                player.x += TILE_SIZE;                
                 break;
             case 'right':
-                this.player.x -= 75;
+                player.x -= TILE_SIZE;
                 break;
             case 'up':
-                this.player.y += 75;
+                player.y += TILE_SIZE;
                 break;
             case 'down':
-                this.player.y -= 75;
+                player.y -= TILE_SIZE;
                 break;
         }
     },       
 
-    update: function() {
-        
-        this.game.physics.arcade.overlap(this.player, this.items, this.itemOverlap, null, this);
+    update: function () {
         //collision, needs to go before cursors check or only last check works
+        this.game.physics.arcade.overlap(this.player, this.items, this.itemOverlap, null, this);
         
         //player movement
         this.cursors.right.onDown.add(this.player.moveRight, this.player); 
