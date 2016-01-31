@@ -24,49 +24,40 @@ BaseBlitz.Game.prototype = {
         //type 'statue' in Tiled custom properties
         this.createItems('statue', 'objectsLayer');  
 
-        this.player = this.game.add.sprite(77, 80, 'player');
-        this.player.map = this.map;
-        this.player.lastMove = '';  
+        this.player1 = this.game.add.sprite(77, 80, 'jingleboots');
+        this.player1.map = this.map;         
         
-        this.game.physics.arcade.enable(this.player);
-        this.game.camera.follow(this.player);  
+        this.player2 = this.game.add.sprite(75*6+3, 75*8+5, 'rattlesocks');
+        this.player2.map = this.map;
+        
+        this.game.physics.arcade.enable(this.player1);
+        this.game.physics.arcade.enable(this.player2);
 
-        //get tile coordinates for player location
-        this.player.getCoords = function () {
-            var tx = this.game.math.snapToFloor(this.x, TILE_SIZE) / TILE_SIZE;
-            var ty = this.game.math.snapToFloor(this.y, TILE_SIZE) / TILE_SIZE;
-            var tile = this.map.getTile(tx, ty, 0, true); //layer index 0, backgroundlayer
-            console.log ("x:"+tx+", "+"y:"+ty+","+" tile #"+tile.index);           
-        };
-        
+        this.currentPlayer = this.player1;
+        this.currentPlayer.lastMove = ''; 
+            
         //direction controller//
-        this.cursors = this.game.input.keyboard.createCursorKeys();
+        this.keyE = this.game.input.keyboard.addKey(Phaser.Keyboard.E);         
+        this.keyLeft = this.game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
+        this.keyRight = this.game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
+        this.keyUp = this.game.input.keyboard.addKey(Phaser.Keyboard.UP);
+        this.keyDown = this.game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
         
-        this.player.moveRight = function () {
-            this.lastMove = 'right';            
-            this.x += TILE_SIZE; 
-            this.getCoords();
-        };
+        this.keyE.onDown.add(this.switchPlayer, this);
+        this.keyLeft.onDown.add(this.moveLeft, this);
+        this.keyRight.onDown.add(this.moveRight, this);
+        this.keyUp.onDown.add(this.moveUp, this);
+        this.keyDown.onDown.add(this.moveDown, this);    
         
-        this.player.moveLeft = function () {
-            this.lastMove = 'left';
-            this.x -= TILE_SIZE;
-            this.getCoords();
-        };
-        
-        this.player.moveUp = function () {
-            this.lastMove = 'up';
-            this.y -= TILE_SIZE;
-            this.getCoords();
-        };
-        
-        this.player.moveDown = function () {
-            this.lastMove = 'down';
-            this.y += TILE_SIZE;
-            this.getCoords();
-        };  
-                
+                       
     },    
+    
+    getCoords: function (player) {
+        var tx = this.game.math.snapToFloor(player.x, TILE_SIZE) / TILE_SIZE;
+        var ty = this.game.math.snapToFloor(player.y, TILE_SIZE) / TILE_SIZE;
+        var tile = this.map.getTile(tx, ty, 0, true); //layer index 0, backgroundlayer
+        console.log ("x:"+tx+", "+"y:"+ty+","+" tile #"+tile.index);   
+    },
     
     createItems: function (kind, layer) { 
         this.items = this.game.add.group();
@@ -118,18 +109,57 @@ BaseBlitz.Game.prototype = {
             case 'down':
                 player.y -= TILE_SIZE;
                 break;
+        }       
+        
+    },
+    
+    moveRight: function () {
+        this.currentPlayer.lastMove = 'right';            
+        this.currentPlayer.x += TILE_SIZE;
+        this.getCoords(this.currentPlayer);  
+        console.log("move: "+this.currentPlayer.key);
+    },
+    
+    moveLeft: function () {
+        this.currentPlayer.lastMove = 'left';
+        this.currentPlayer.x -= TILE_SIZE;
+        this.getCoords(this.currentPlayer);
+        console.log("move: "+this.currentPlayer.key);
+    },
+    
+    moveUp: function () {
+        this.currentPlayer.lastMove = 'up';
+        this.currentPlayer.y -= TILE_SIZE;
+        this.getCoords(this.currentPlayer);
+        console.log("move: "+this.currentPlayer.key);
+    },
+    
+    moveDown: function () {
+        this.currentPlayer.lastMove = 'down';
+        this.currentPlayer.y += TILE_SIZE;
+        this.getCoords(this.currentPlayer);
+        console.log("move: "+this.currentPlayer.key);
+    },
+    
+    switchPlayer: function () {
+        if (this.currentPlayer == this.player1){                     
+            this.currentPlayer = this.player2; 
+            
+        } else {
+            this.currentPlayer = this.player1;            
         }
-    },       
+        
+        console.log("It is now "+this.currentPlayer.key+"'s turn.");
+    },
     
     update: function () {
-        this.game.physics.arcade.overlap(this.player, this.items, this.itemOverlap, null, this);
+                         
+            this.game.physics.arcade.overlap(this.player1, this.items, this.itemOverlap, null, this); 
+            this.game.physics.arcade.overlap(this.player2, this.items, this.itemOverlap, null, this); 
         
-        //player movement
-        this.cursors.right.onDown.add(this.player.moveRight, this.player); 
-        this.cursors.left.onDown.add(this.player.moveLeft, this.player);
-        this.cursors.up.onDown.add(this.player.moveUp, this.player);
-        this.cursors.down.onDown.add(this.player.moveDown, this.player);        
-        
+            this.game.camera.follow(this.currentPlayer);
+    
   },
+    
     
 };
