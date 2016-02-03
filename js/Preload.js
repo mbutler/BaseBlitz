@@ -13,6 +13,8 @@ BaseBlitz.Preload.prototype = {
         this.load.image('statue', 'images/statue.png');
         this.load.image('jingleboots', 'images/jingleboots.png');
         this.load.image('rattlesocks', 'images/rattlesocks.png');
+        this.load.image('scoopercram', 'images/scoopercram.png');
+        this.load.image('jumperstomp', 'images/jumperstomp.png');
         this.load.image('trapdoor', 'images/trapdoor.png');
                
     },

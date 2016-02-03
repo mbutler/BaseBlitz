@@ -8,7 +8,10 @@ BaseBlitz.Game = function () {
 
 BaseBlitz.Game.prototype = {
     
-    init: function () {},  
+    init: function () {
+        this.initOrder = [];
+        this.initRolls = [];
+    },  
     
     
     create: function () {   
@@ -24,14 +27,12 @@ BaseBlitz.Game.prototype = {
         //type 'statue' in Tiled custom properties
         this.createItems('statue', 'objectsLayer');  
 
-        this.player1 = this.game.add.sprite(77, 80, 'jingleboots');
-        this.player1.map = this.map;         
+        this.player1 = this.game.add.sprite(75*1+3, 75*1+5, 'jingleboots');       
+        this.player2 = this.game.add.sprite(75*1+3, 75*3+5, 'rattlesocks');       
+        this.player3 = this.game.add.sprite(75*2+3, 75*2+5, 'scoopercram');        
+        this.player4 = this.game.add.sprite(75*3+3, 75*3+5, 'jumperstomp');
         
-        this.player2 = this.game.add.sprite(75*6+3, 75*8+5, 'rattlesocks');
-        this.player2.map = this.map;
-        
-        this.game.physics.arcade.enable(this.player1);
-        this.game.physics.arcade.enable(this.player2);
+        this.game.physics.arcade.enable([this.player1,this.player2,this.player3,this.player4]);
 
         this.currentPlayer = this.player1;
         this.currentPlayer.lastMove = ''; 
@@ -47,10 +48,27 @@ BaseBlitz.Game.prototype = {
         this.keyLeft.onDown.add(this.moveLeft, this);
         this.keyRight.onDown.add(this.moveRight, this);
         this.keyUp.onDown.add(this.moveUp, this);
-        this.keyDown.onDown.add(this.moveDown, this);    
+        this.keyDown.onDown.add(this.moveDown, this); 
         
-                       
-    },    
+        this.initManager(this.player2, 22); // rattlesocks
+        this.initManager(this.player3, 9); //scoopercram
+        this.initManager(this.player1, 30); // jingleboots
+        this.initManager(this.player4, 15); //jumperstomp
+                   
+    }, 
+    
+    initManager: function (creature, roll) {        
+        //need two lists, the rolls, and the names
+        this.initRolls.push(roll);
+        //sort numbers
+        function sortNumber(a,b) {
+            return b - a;
+        }
+        this.initRolls.sort(sortNumber);
+        //find the position to use
+        var position = this.initRolls.indexOf(roll);
+        this.initOrder.splice(position,0,creature);        
+    },
     
     getCoords: function (player) {
         var tx = this.game.math.snapToFloor(player.x, TILE_SIZE) / TILE_SIZE;
@@ -142,13 +160,17 @@ BaseBlitz.Game.prototype = {
     },
     
     switchPlayer: function () {
-        if (this.currentPlayer == this.player1){                     
-            this.currentPlayer = this.player2; 
-            
+        var position = this.initOrder.indexOf(this.currentPlayer);
+        
+        //loop around initiative
+        if (position == this.initOrder.length-1) {
+            var nextPosition = 0;
         } else {
-            this.currentPlayer = this.player1;            
+            var nextPosition = position+1;
         }
         
+        var nextPlayer = this.initOrder[nextPosition];
+        this.currentPlayer = nextPlayer;        
         console.log("It is now "+this.currentPlayer.key+"'s turn.");
     },
     
@@ -156,10 +178,12 @@ BaseBlitz.Game.prototype = {
                          
             this.game.physics.arcade.overlap(this.player1, this.items, this.itemOverlap, null, this); 
             this.game.physics.arcade.overlap(this.player2, this.items, this.itemOverlap, null, this); 
+            this.game.physics.arcade.overlap(this.player3, this.items, this.itemOverlap, null, this); 
+            this.game.physics.arcade.overlap(this.player4, this.items, this.itemOverlap, null, this); 
         
             this.game.camera.follow(this.currentPlayer);
     
-  },
+    },
     
     
 };
