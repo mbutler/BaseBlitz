@@ -11,6 +11,7 @@ BaseBlitz.Game.prototype = {
     init: function () {
         this.initOrder = [];
         this.initRolls = [];
+        this.allPlayers = [];
     },  
     
     
@@ -27,15 +28,24 @@ BaseBlitz.Game.prototype = {
         //type 'statue' in Tiled custom properties
         this.createItems('statue', 'objectsLayer');  
 
-        this.player1 = this.game.add.sprite(75*1+3, 75*1+5, 'jingleboots');       
-        this.player2 = this.game.add.sprite(75*1+3, 75*3+5, 'rattlesocks');       
-        this.player3 = this.game.add.sprite(75*2+3, 75*2+5, 'scoopercram');        
-        this.player4 = this.game.add.sprite(75*3+3, 75*3+5, 'jumperstomp');
+        this.hero1 = this.game.add.sprite(75*1+3, 75*1+5, 'jingleboots');       
+        this.hero2 = this.game.add.sprite(75*1+3, 75*3+5, 'rattlesocks');       
+        this.hero3 = this.game.add.sprite(75*2+3, 75*2+5, 'scoopercram');        
+        this.hero4 = this.game.add.sprite(75*3+3, 75*3+5, 'jumperstomp');
+        this.heroes = [this.hero1,this.hero2,this.hero3,this.hero4];
         
-        this.game.physics.arcade.enable([this.player1,this.player2,this.player3,this.player4]);
+        this.monster1 = this.game.add.sprite(75*6+3, 75*9+5, 'spider');
+        this.monster2 = this.game.add.sprite(75*8+3, 75*8+5, 'golem');
+        this.monster3 = this.game.add.sprite(75*9+3, 75*9+5, 'fungus');
+        this.monster4 = this.game.add.sprite(75*6+3, 75*7+5, 'blindheim');
+        this.monsters = [this.monster1,this.monster2,this.monster3,this.monster4];
+        
+        this.game.physics.arcade.enable(this.heroes);
+        this.game.physics.arcade.enable(this.monsters);
 
-        this.currentPlayer = this.player1;
-        this.currentPlayer.lastMove = ''; 
+        this.currentPlayer = this.hero1;
+        this.currentPlayer.lastMove = '';
+        this.game.world.bringToTop(this.currentPlayer);
             
         //direction controller//
         this.keyE = this.game.input.keyboard.addKey(Phaser.Keyboard.E);         
@@ -50,10 +60,16 @@ BaseBlitz.Game.prototype = {
         this.keyUp.onDown.add(this.moveUp, this);
         this.keyDown.onDown.add(this.moveDown, this); 
         
-        this.initManager(this.player2, 22); // rattlesocks
-        this.initManager(this.player3, 9); //scoopercram
-        this.initManager(this.player1, 30); // jingleboots
-        this.initManager(this.player4, 15); //jumperstomp
+        //manually adding here, this will be dynamic in game
+        this.initManager(this.hero2, 22); // rattlesocks
+        this.initManager(this.hero3, 9); //scoopercram
+        this.initManager(this.hero1, 30); // jingleboots
+        this.initManager(this.hero4, 15); //jumperstomp
+        
+        this.initManager(this.monster2, 20); // rattlesocks
+        this.initManager(this.monster3, 3); //scoopercram
+        this.initManager(this.monster1, 12); // jingleboots
+        this.initManager(this.monster4, 15); //jumperstomp
                    
     }, 
     
@@ -171,16 +187,18 @@ BaseBlitz.Game.prototype = {
         
         var nextPlayer = this.initOrder[nextPosition];
         this.currentPlayer = nextPlayer;        
+        this.game.world.bringToTop(this.currentPlayer);
         console.log("It is now "+this.currentPlayer.key+"'s turn.");
     },
     
     update: function () {
                          
-            this.game.physics.arcade.overlap(this.player1, this.items, this.itemOverlap, null, this); 
-            this.game.physics.arcade.overlap(this.player2, this.items, this.itemOverlap, null, this); 
-            this.game.physics.arcade.overlap(this.player3, this.items, this.itemOverlap, null, this); 
-            this.game.physics.arcade.overlap(this.player4, this.items, this.itemOverlap, null, this); 
+            this.game.physics.arcade.overlap(this.heroes, this.items, this.itemOverlap, null, this); 
+            this.game.physics.arcade.overlap(this.monsters, this.items, this.itemOverlap, null, this);
         
+            //this.game.physics.arcade.overlap(this.heroes, this.monsters, this.itemOverlap, null, this);
+            //this.game.physics.arcade.overlap(this.monsters, this.heroes, this.itemOverlap, null, this);
+
             this.game.camera.follow(this.currentPlayer);
     
     },

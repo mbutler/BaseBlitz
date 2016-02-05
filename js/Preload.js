@@ -11,11 +11,19 @@ BaseBlitz.Preload.prototype = {
         this.load.tilemap('map1', 'floor.json', null, Phaser.Tilemap.TILED_JSON);
         this.load.image('8x3-stone', '/images/8x3-stone.png');
         this.load.image('statue', 'images/statue.png');
+        this.load.image('trapdoor', 'images/trapdoor.png');
+        
         this.load.image('jingleboots', 'images/jingleboots.png');
         this.load.image('rattlesocks', 'images/rattlesocks.png');
         this.load.image('scoopercram', 'images/scoopercram.png');
         this.load.image('jumperstomp', 'images/jumperstomp.png');
-        this.load.image('trapdoor', 'images/trapdoor.png');
+        
+        this.load.image('spider', 'images/spider.png');
+        this.load.image('fungus', 'images/fungus.png');
+        this.load.image('golem', 'images/golem.png');
+        this.load.image('blindheim', 'images/blindheim.png');
+        
+        
                
     },
     create: function () {
