@@ -129,26 +129,27 @@ BaseBlitz.Game.prototype = {
     
     //callback from overlap function
     itemOverlap: function (player, item) {
-        var tx = this.math.snapToFloor(player.x, TILE_SIZE) / TILE_SIZE;
-        var ty = this.math.snapToFloor(player.y, TILE_SIZE) / TILE_SIZE;
-        var tile = this.map.getTile(tx, ty, this.backgroundlayer.index, true);
-        console.log("collision with "+item.type);
-        
-        switch (player.lastMove) {
-        case 'left':
-            player.x += TILE_SIZE;                
-            break;
-        case 'right':
-            player.x -= TILE_SIZE;
-            break;
-        case 'up':
-            player.y += TILE_SIZE;
-            break;
-        case 'down':
-            player.y -= TILE_SIZE;
-            break;
+        if (player === this.currentPlayer) {
+            var tx = this.math.snapToFloor(this.currentPlayer.x, TILE_SIZE) / TILE_SIZE;
+            var ty = this.math.snapToFloor(this.currentPlayer.y, TILE_SIZE) / TILE_SIZE;
+            var tile = this.map.getTile(tx, ty, this.backgroundlayer.index, true);
+            console.log("collision with " + item.key);
+
+            switch (player.lastMove) {
+            case 'left':
+                player.x += TILE_SIZE;                
+                break;
+            case 'right':
+                player.x -= TILE_SIZE;
+                break;
+            case 'up':
+                player.y += TILE_SIZE;
+                break;
+            case 'down':
+                player.y -= TILE_SIZE;
+                break;
+            }
         }
-        
     },
     
     moveRight: function () {
@@ -200,8 +201,8 @@ BaseBlitz.Game.prototype = {
         this.game.physics.arcade.overlap(this.heroes, this.items, this.itemOverlap, null, this);
         this.game.physics.arcade.overlap(this.monsters, this.items, this.itemOverlap, null, this);
         
-        //this.game.physics.arcade.overlap(this.heroes, this.monsters, this.itemOverlap, null, this);
-        //this.game.physics.arcade.overlap(this.monsters, this.heroes, this.itemOverlap, null, this);
+        this.game.physics.arcade.overlap(this.heroes, this.monsters, this.itemOverlap, null, this);
+        this.game.physics.arcade.overlap(this.monsters, this.heroes, this.itemOverlap, null, this);
 
         this.game.camera.follow(this.currentPlayer);
 
