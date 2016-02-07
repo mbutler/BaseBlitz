@@ -11,9 +11,13 @@ BaseBlitz.Game.prototype = {
     init: function () {
         this.initOrder = [];
         this.initRolls = [];
+<<<<<<< HEAD
         this.heroes = [];
         this.monsters = [];
         this.players = [];
+=======
+        this.allPlayers = [];
+>>>>>>> origin/master
     },
     
     
@@ -28,6 +32,7 @@ BaseBlitz.Game.prototype = {
         //tileset 'statue' in Tiled, type 'statue' in Tiled custom properties
         this.map.addTilesetImage('statue', 'statue');
         this.createItems('statue', 'objectsLayer');
+<<<<<<< HEAD
         
         //heroes
         this.hero1 = this.game.add.sprite(75 * 1 + 3, 75 * 1 + 5, 'jingleboots');
@@ -48,12 +53,32 @@ BaseBlitz.Game.prototype = {
           return a.concat(b);
         });
         
+=======
+        
+        //heroes
+        this.hero1 = this.game.add.sprite(75 * 1 + 3, 75 * 1 + 5, 'jingleboots');
+        this.hero2 = this.game.add.sprite(75 * 1 + 3, 75 * 3 + 5, 'rattlesocks');
+        this.hero3 = this.game.add.sprite(75 * 2 + 3, 75 * 2  + 5, 'scoopercram');
+        this.hero4 = this.game.add.sprite(75 * 3 + 3, 75 * 3 + 5, 'jumperstomp');
+        this.heroes = [this.hero1, this.hero2, this.hero3, this.hero4];
+        
+        //monsters
+        this.monster1 = this.game.add.sprite(75 * 6 + 3, 75 * 9 + 5, 'spider');
+        this.monster2 = this.game.add.sprite(75 * 8 + 3, 75 * 8 + 5, 'golem');
+        this.monster3 = this.game.add.sprite(75 * 9 + 3, 75 * 9 + 5, 'fungus');
+        this.monster4 = this.game.add.sprite(75 * 6 + 3, 75 * 7 + 5, 'blindheim');
+        this.monsters = [this.monster1, this.monster2, this.monster3, this.monster4];
+        
+>>>>>>> origin/master
         //enable physics for all player sprites
         this.game.physics.arcade.enable(this.heroes);
         this.game.physics.arcade.enable(this.monsters);
         
         //direction controller//
+<<<<<<< HEAD
         this.keyD = this.game.input.keyboard.addKey(Phaser.Keyboard.D); // debug mode
+=======
+>>>>>>> origin/master
         this.keyE = this.game.input.keyboard.addKey(Phaser.Keyboard.E);
         this.keyLeft = this.game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
         this.keyRight = this.game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
@@ -85,6 +110,7 @@ BaseBlitz.Game.prototype = {
         ////////////////////////////////////////////////////////////////
                    
     },
+<<<<<<< HEAD
     
     adjacentEnemies: function (player) {
         player = this.currentPlayer; //debug mode
@@ -127,6 +153,10 @@ BaseBlitz.Game.prototype = {
     },
     
     initManager: function (player, roll) {
+=======
+    
+    initManager: function (creature, roll) {
+>>>>>>> origin/master
         //need two lists, the rolls, and the names
         this.initRolls.push(roll);
         //sort numbers
@@ -136,7 +166,11 @@ BaseBlitz.Game.prototype = {
         this.initRolls.sort(sortNumber);
         //find the position to use
         var position = this.initRolls.indexOf(roll);
+<<<<<<< HEAD
         this.initOrder.splice(position, 0, player);
+=======
+        this.initOrder.splice(position, 0, creature);
+>>>>>>> origin/master
     },
     
     getPoint: function (entity) {
@@ -144,10 +178,14 @@ BaseBlitz.Game.prototype = {
         var tx = this.game.math.snapToFloor(entity.x, TILE_SIZE) / TILE_SIZE;
         var ty = this.game.math.snapToFloor(entity.y, TILE_SIZE) / TILE_SIZE;
         var tile = this.map.getTile(tx, ty, 0, true); //layer index 0, backgroundlayer
+<<<<<<< HEAD
         //console.log("x:" + tx + ", " + "y:" + ty + "," + " tile #" + tile.x);
         point.x = tx;
         point.y = ty;
         return point;
+=======
+        console.log("x:" + tx + ", " + "y:" + ty + "," + " tile #" + tile.index);
+>>>>>>> origin/master
     },
     
     createItems: function (kind, layer) {
@@ -208,28 +246,44 @@ BaseBlitz.Game.prototype = {
     moveRight: function () {
         this.currentPlayer.lastMove = 'right';
         this.currentPlayer.x += TILE_SIZE;
+<<<<<<< HEAD
         this.getPoint(this.currentPlayer);
+=======
+        this.getCoords(this.currentPlayer);
+>>>>>>> origin/master
         console.log("move: " + this.currentPlayer.key);
     },
     
     moveLeft: function () {
         this.currentPlayer.lastMove = 'left';
         this.currentPlayer.x -= TILE_SIZE;
+<<<<<<< HEAD
         this.getPoint(this.currentPlayer);
+=======
+        this.getCoords(this.currentPlayer);
+>>>>>>> origin/master
         console.log("move: " + this.currentPlayer.key);
     },
     
     moveUp: function () {
         this.currentPlayer.lastMove = 'up';
         this.currentPlayer.y -= TILE_SIZE;
+<<<<<<< HEAD
         this.getPoint(this.currentPlayer);
+=======
+        this.getCoords(this.currentPlayer);
+>>>>>>> origin/master
         console.log("move: " + this.currentPlayer.key);
     },
     
     moveDown: function () {
         this.currentPlayer.lastMove = 'down';
         this.currentPlayer.y += TILE_SIZE;
+<<<<<<< HEAD
         this.getPoint(this.currentPlayer);
+=======
+        this.getCoords(this.currentPlayer);
+>>>>>>> origin/master
         console.log("move: " + this.currentPlayer.key);
     },
     
