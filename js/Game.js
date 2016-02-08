@@ -60,7 +60,7 @@ BaseBlitz.Game.prototype = {
         this.keyUp = this.game.input.keyboard.addKey(Phaser.Keyboard.UP);
         this.keyDown = this.game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
         
-        this.keyD.onDown.add(this.adjacentEnemies, this);
+        this.keyD.onDown.add(this.flankedEnemies, this);
         this.keyE.onDown.add(this.switchPlayer, this);
         this.keyLeft.onDown.add(this.moveLeft, this);
         this.keyRight.onDown.add(this.moveRight, this);
@@ -86,13 +86,46 @@ BaseBlitz.Game.prototype = {
                    
     },
     
-    adjacentEnemies: function (player) {
+    flankedEnemies: function (player) {
         player = this.currentPlayer; //debug mode
+        var flankedList = [];
+        var playerPoint = this.getPoint(player);
+        var adjacentList = this.adjacentEnemies(player);
+                
+        for (var i = 0; i < adjacentList.length; i++) {
+            var enemyPoint = this.getPoint(adjacentList[i]);
+            var dx = (enemyPoint.x - playerPoint.x) + enemyPoint.x;
+            var dy = (enemyPoint.y - playerPoint.y) + enemyPoint.y;
+            var flankPoint = new Phaser.Point(dx, dy);
+            
+            if (this.entityType(player) === 'hero') {
+                for (var j = 0; j < this.heroes.length; j++) {
+                    var allyPoint = this.getPoint(this.heroes[j]);
+                    if (allyPoint.equals(flankPoint)) {
+                        console.log("flanking " + adjacentList[i].key);
+                        flankedList.push(adjacentList[i]);
+                    }
+                }
+            } else {
+                for (var k = 0; k < this.monsters.length; k++) {
+                    var allyPoint = this.getPoint(this.monsters[k]);
+                    if (allyPoint.equals(flankPoint)) {
+                        console.log("flanking " + adjacentList[i].key);
+                        flankedList.push(adjacentList[i]);
+                    }
+                }
+            }
+        }
+        return flankedList;
+    },
+    
+    adjacentEnemies: function (player) {
+        //player = this.currentPlayer; //debug mode
         var adjacentList = [];
         var playerPoint = this.getPoint(player);
         if (this.entityType(player) === 'hero') {
-            for (var i=0; i < this.monsters.length; i++) {
-                var enemyPoint = this.getPoint(this.monsters[i]);
+            for (var i = 0; i < this.monsters.length; i++) {
+                var enemyPoint = this.getPoint(this.monsters[i]);                
                 if (playerPoint.distance(enemyPoint, true) == 1) {
                     adjacentList.push(this.monsters[i]);                    
                 }
@@ -101,18 +134,18 @@ BaseBlitz.Game.prototype = {
             for (var i=0; i < this.heroes.length; i++) {
                 var enemyPoint = this.getPoint(this.heroes[i]);
                 if (playerPoint.distance(enemyPoint, true) == 1) {
-                    adjacentList.push(this.monsters[i]);                    
+                    adjacentList.push(this.heroes[i]);                    
                 }
             }
         }
-        console.log(adjacentList);
+        //console.log(adjacentList);
         return adjacentList;
     },
     
     entityType: function (entity) {
-        entity = this.currentPlayer; //debug mode
+        //entity = this.currentPlayer; //debug mode
         var index = this.players.indexOf(entity);
-        var entityType = '';
+        var entityType = null;
         if (index != -1) {
             if (this.heroes.indexOf(entity) != -1) {
                 entityType = 'hero';
@@ -139,14 +172,13 @@ BaseBlitz.Game.prototype = {
         this.initOrder.splice(position, 0, player);
     },
     
-    getPoint: function (entity) {
-        var point = new Phaser.Point();
+    getPoint: function (entity) {        
         var tx = this.game.math.snapToFloor(entity.x, TILE_SIZE) / TILE_SIZE;
         var ty = this.game.math.snapToFloor(entity.y, TILE_SIZE) / TILE_SIZE;
         var tile = this.map.getTile(tx, ty, 0, true); //layer index 0, backgroundlayer
         //console.log("x:" + tx + ", " + "y:" + ty + "," + " tile #" + tile.x);
-        point.x = tx;
-        point.y = ty;
+        var point = new Phaser.Point(tx, ty);
+        //console.log(point);
         return point;
     },
     
