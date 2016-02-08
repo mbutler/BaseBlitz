@@ -24,6 +24,7 @@ BaseBlitz.Game.prototype = {
         //tileset 'statue' in Tiled, type 'statue' in Tiled custom properties
         this.map.addTilesetImage('statue', 'statue');
         this.createItems('statue', 'objectsLayer');
+        this.trapdoor = this.game.add.sprite(75 * 4, 75 * 5, 'trapdoor');
         
         //heroes
         this.hero1 = this.game.add.sprite(75 * 1 + 3, 75 * 1 + 5, 'jingleboots');
@@ -46,39 +47,40 @@ BaseBlitz.Game.prototype = {
         
         //enable physics for all player sprites
         this.game.physics.arcade.enable(this.heroes);
-        this.game.physics.arcade.enable(this.monsters);
+        this.game.physics.arcade.enable(this.monsters);        
         
-        //direction controller//
+        //////////////////////////MANUAL GAME SETUP/////////////////////       
+        
+        this.initManager(this.hero2, 2); // rattlesocks
+        this.initManager(this.hero3, 9); //scoopercram
+        this.initManager(this.hero1, 30); // jingleboots
+        this.initManager(this.hero4, 15); //jumperstomp
+        
+        this.initManager(this.monster2, 20); // golem
+        this.initManager(this.monster3, 3); //fungus
+        this.initManager(this.monster1, 12); // spider
+        this.initManager(this.monster4, 15); //blindheim
+        
+        this.currentPlayer = this.initOrder[0];
+        this.currentPlayer.lastMove = '';
+        this.game.world.bringToTop(this.currentPlayer);
+        ////////////////////////////////////////////////////////////////
+        
+        //direction controller//       
         this.keyD = this.game.input.keyboard.addKey(Phaser.Keyboard.D); // debug mode
         this.keyE = this.game.input.keyboard.addKey(Phaser.Keyboard.E);
         this.keyLeft = this.game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
         this.keyRight = this.game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
         this.keyUp = this.game.input.keyboard.addKey(Phaser.Keyboard.UP);
-        this.keyDown = this.game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
-        
+        this.keyDown = this.game.input.keyboard.addKey(Phaser.Keyboard.DOWN);    
+              
         this.keyD.onDown.add(this.flankedEnemies, this);
-        this.keyE.onDown.add(this.switchPlayer, this);
-        this.keyLeft.onDown.add(this.moveLeft, this);
-        this.keyRight.onDown.add(this.moveRight, this);
-        this.keyUp.onDown.add(this.moveUp, this);
-        this.keyDown.onDown.add(this.moveDown, this);
-        
-        
-        //////////////////////////MANUAL GAME SETUP/////////////////////
-        this.currentPlayer = this.hero1;
-        this.currentPlayer.lastMove = '';
-        this.game.world.bringToTop(this.currentPlayer);
-        
-        this.initManager(this.hero2, Math.random); // rattlesocks
-        this.initManager(this.hero3, 9); //scoopercram
-        this.initManager(this.hero1, 30); // jingleboots
-        this.initManager(this.hero4, 15); //jumperstomp
-        
-        this.initManager(this.monster2, 20); // rattlesocks
-        this.initManager(this.monster3, 3); //scoopercram
-        this.initManager(this.monster1, 12); // jingleboots
-        this.initManager(this.monster4, 15); //jumperstomp
-        ////////////////////////////////////////////////////////////////
+        this.keyE.onDown.add(this.switchPlayer, this);  
+        //args: (callback, context, priority, entity('player' for this.currentPlayer or object), direction)  
+        this.keyLeft.onDown.add(this.move, this, 0, 'player');
+        this.keyRight.onDown.add(this.move, this, 0, 'player');
+        this.keyUp.onDown.add(this.move, this, 0, 'player');
+        this.keyDown.onDown.add(this.move, this, 0, 'player');
                    
     },
     
@@ -86,7 +88,7 @@ BaseBlitz.Game.prototype = {
         player = this.currentPlayer; //debug mode
         var flankedList = [];
         var playerPoint = this.getPoint(player);
-        var adjacentList = this.adjacentEnemies(player);
+        var adjacentList = this.adjacentEnemies(player, 1);
         
         //checks the point just ahead of adjacent enemies to see if ally is there
         for (var i = 0; i < adjacentList.length; i++) {
@@ -116,7 +118,7 @@ BaseBlitz.Game.prototype = {
         return flankedList;
     },
     
-    adjacentEnemies: function (player) {
+    adjacentEnemies: function (player, reach) {
         //player = this.currentPlayer; //debug mode
         var adjacentList = [];
         var playerPoint = this.getPoint(player);
@@ -124,14 +126,14 @@ BaseBlitz.Game.prototype = {
         if (this.entityType(player) === 'hero') {
             for (var i = 0; i < this.monsters.length; i++) {
                 var enemyPoint = this.getPoint(this.monsters[i]);                
-                if (playerPoint.distance(enemyPoint, true) == 1) {
+                if (playerPoint.distance(enemyPoint, true) == reach) {
                     adjacentList.push(this.monsters[i]);                    
                 }
             }            
         } else {
             for (var i=0; i < this.heroes.length; i++) {
                 var enemyPoint = this.getPoint(this.heroes[i]);
-                if (playerPoint.distance(enemyPoint, true) == 1) {
+                if (playerPoint.distance(enemyPoint, true) == reach) {
                     adjacentList.push(this.heroes[i]);                    
                 }
             }
@@ -173,8 +175,7 @@ BaseBlitz.Game.prototype = {
     getPoint: function (entity) {        
         var tx = this.game.math.snapToFloor(entity.x, this.map.tileWidth) / this.map.tileWidth;
         var ty = this.game.math.snapToFloor(entity.y, this.map.tileWidth) / this.map.tileWidth;
-        var point = new Phaser.Point(tx, ty);
-        //console.log(point);
+        var point = new Phaser.Point(tx, ty);       
         return point;
     },
     
@@ -211,54 +212,58 @@ BaseBlitz.Game.prototype = {
     //callback from overlap function
     entityOverlap: function (player, entity) {
         if (player === this.currentPlayer) {
-            console.log("collision with " + entity.key);
+            console.log(entity);
 
             //bounces player in opposite direction, simulating blocked
             switch (player.lastMove) {
-            case 'left':
+            case 'Left':
                 player.x += this.map.tileWidth;                
                 break;
-            case 'right':
+            case 'Right':
                 player.x -= this.map.tileWidth;
                 break;
-            case 'up':
+            case 'Up':
                 player.y += this.map.tileWidth;
                 break;
-            case 'down':
+            case 'Down':
                 player.y -= this.map.tileWidth;
                 break;
             }
         }
     },
     
-    moveRight: function () {
-        this.currentPlayer.lastMove = 'right';
-        this.currentPlayer.x += this.map.tileWidth;
-        this.getPoint(this.currentPlayer);
-        console.log("move: " + this.currentPlayer.key);
-    },
-    
-    moveLeft: function () {
-        this.currentPlayer.lastMove = 'left';
-        this.currentPlayer.x -= this.map.tileWidth;
-        this.getPoint(this.currentPlayer);
-        console.log("move: " + this.currentPlayer.key);
-    },
-    
-    moveUp: function () {
-        this.currentPlayer.lastMove = 'up';
-        this.currentPlayer.y -= this.map.tileWidth;
-        this.getPoint(this.currentPlayer);
-        console.log("move: " + this.currentPlayer.key);
-    },
-    
-    moveDown: function () {
-        this.currentPlayer.lastMove = 'down';
-        this.currentPlayer.y += this.map.tileWidth;
-        this.getPoint(this.currentPlayer);
-        console.log("move: " + this.currentPlayer.key);
-    },
-    
+    //use direction param to force movement of player or other entity
+    move: function (context, type, direction) {        
+        if (type == 'player') {
+            var entity = this.currentPlayer;
+            if (direction == null) {
+                direction = context.event.keyIdentifier;
+            }            
+        } else {
+            var entity = type;
+        }
+        
+        entity.lastMove = direction;
+        switch (direction) {
+        case 'Left':            
+            entity.x -= this.map.tileWidth;            
+            console.log(entity.key + " moves left");
+            break;
+        case 'Right':            
+            entity.x += this.map.tileWidth;
+            console.log(entity.key + " moves right");
+            break;
+        case 'Up':            
+            entity.y -= this.map.tileWidth;           
+            console.log(entity.key.key + " moves up");
+            break;
+        case 'Down':            
+            entity.y += this.map.tileWidth;            
+            console.log(entity.key + " moves down");
+            break;
+        }
+    },    
+        
     switchPlayer: function () {
         var position = this.initOrder.indexOf(this.currentPlayer);
         
