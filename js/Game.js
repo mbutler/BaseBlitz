@@ -17,7 +17,7 @@ BaseBlitz.Game.prototype = {
         
         //create tilemap and set up layers
         this.map = this.game.add.tilemap('map1');
-        this.map.addTilesetImage('8x3-stone', '8x3-stone');        
+        this.map.addTilesetImage('8x3-stone', '8x3-stone');
         this.backgroundlayer = this.map.createLayer('backgroundLayer');
         this.backgroundlayer.resizeWorld();
         
@@ -42,12 +42,12 @@ BaseBlitz.Game.prototype = {
         
         //reduce heroes and monsters into list of all players
         this.players = [this.heroes, this.monsters].reduce(function (a, b) {
-          return a.concat(b);
+            return a.concat(b);
         });
         
         //enable physics for all player sprites
         this.game.physics.arcade.enable(this.heroes);
-        this.game.physics.arcade.enable(this.monsters);        
+        this.game.physics.arcade.enable(this.monsters);
         
         //////////////////////////MANUAL GAME SETUP/////////////////////       
         
@@ -72,10 +72,10 @@ BaseBlitz.Game.prototype = {
         this.keyLeft = this.game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
         this.keyRight = this.game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
         this.keyUp = this.game.input.keyboard.addKey(Phaser.Keyboard.UP);
-        this.keyDown = this.game.input.keyboard.addKey(Phaser.Keyboard.DOWN);    
+        this.keyDown = this.game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
               
         this.keyD.onDown.add(this.flankedEnemies, this);
-        this.keyE.onDown.add(this.switchPlayer, this);  
+        this.keyE.onDown.add(this.switchPlayer, this);
         //args: (callback, context, priority, entity('player' for this.currentPlayer or object), direction)  
         this.keyLeft.onDown.add(this.move, this, 0, 'player');
         this.keyRight.onDown.add(this.move, this, 0, 'player');
@@ -85,7 +85,7 @@ BaseBlitz.Game.prototype = {
     },
     
     flankedEnemies: function (player) {
-        player = this.currentPlayer; //debug mode
+        //player = this.currentPlayer; //debug mode
         var flankedList = [];
         var playerPoint = this.getPoint(player);
         var adjacentList = this.adjacentEnemies(player, 1);
@@ -238,28 +238,43 @@ BaseBlitz.Game.prototype = {
             var entity = this.currentPlayer;
             if (direction == null) {
                 direction = context.event.keyIdentifier;
-            }            
+            }
+            
+            if (context.shiftKey == true) {
+                var moveType = "shifts";
+            } else {
+                var moveType = "moves";
+                var adjacentList = this.adjacentEnemies(entity, 1);
+                //console.log(adjacentList);
+                for (var i = 0; i < adjacentList.length; i++) {
+                    console.log(adjacentList[i].key + " gets an attack of opportunity!");
+                }
+            }
         } else {
             var entity = type;
-        }
+        } 
         
         entity.lastMove = direction;
         switch (direction) {
         case 'Left':            
             entity.x -= this.map.tileWidth;            
-            console.log(entity.key + " moves left");
+            console.log(entity.key + " " + moveType + " left");
+            this.flankedEnemies(entity);
             break;
-        case 'Right':            
-            entity.x += this.map.tileWidth;
-            console.log(entity.key + " moves right");
+        case 'Right':                
+            entity.x += this.map.tileWidth;            
+            console.log(entity.key + " " + moveType + " right");
+            this.flankedEnemies(entity);
             break;
         case 'Up':            
-            entity.y -= this.map.tileWidth;           
-            console.log(entity.key.key + " moves up");
+            entity.y -= this.map.tileWidth;
+            console.log(entity.key + " " + moveType + " up");
+            this.flankedEnemies(entity);
             break;
         case 'Down':            
-            entity.y += this.map.tileWidth;            
-            console.log(entity.key + " moves down");
+            entity.y += this.map.tileWidth;
+            console.log(entity.key + " " + moveType + " down");
+            this.flankedEnemies(entity);
             break;
         }
     },    
