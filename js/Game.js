@@ -1,10 +1,6 @@
 var BaseBlitz = BaseBlitz || {};
 
-BaseBlitz.Game = function () {
-    
-    TILE_SIZE = 75;
-    
-};
+BaseBlitz.Game = function () {};
 
 BaseBlitz.Game.prototype = {
     
@@ -91,7 +87,8 @@ BaseBlitz.Game.prototype = {
         var flankedList = [];
         var playerPoint = this.getPoint(player);
         var adjacentList = this.adjacentEnemies(player);
-                
+        
+        //checks the point just ahead of adjacent enemies to see if ally is there
         for (var i = 0; i < adjacentList.length; i++) {
             var enemyPoint = this.getPoint(adjacentList[i]);
             var dx = (enemyPoint.x - playerPoint.x) + enemyPoint.x;
@@ -123,6 +120,7 @@ BaseBlitz.Game.prototype = {
         //player = this.currentPlayer; //debug mode
         var adjacentList = [];
         var playerPoint = this.getPoint(player);
+        //loops through opposite team and finds each with a distance of 1 from player, aka 'adjacent'
         if (this.entityType(player) === 'hero') {
             for (var i = 0; i < this.monsters.length; i++) {
                 var enemyPoint = this.getPoint(this.monsters[i]);                
@@ -173,10 +171,8 @@ BaseBlitz.Game.prototype = {
     },
     
     getPoint: function (entity) {        
-        var tx = this.game.math.snapToFloor(entity.x, TILE_SIZE) / TILE_SIZE;
-        var ty = this.game.math.snapToFloor(entity.y, TILE_SIZE) / TILE_SIZE;
-        var tile = this.map.getTile(tx, ty, 0, true); //layer index 0, backgroundlayer
-        //console.log("x:" + tx + ", " + "y:" + ty + "," + " tile #" + tile.x);
+        var tx = this.game.math.snapToFloor(entity.x, this.map.tileWidth) / this.map.tileWidth;
+        var ty = this.game.math.snapToFloor(entity.y, this.map.tileWidth) / this.map.tileWidth;
         var point = new Phaser.Point(tx, ty);
         //console.log(point);
         return point;
@@ -213,25 +209,23 @@ BaseBlitz.Game.prototype = {
     },
     
     //callback from overlap function
-    itemOverlap: function (player, item) {
+    entityOverlap: function (player, entity) {
         if (player === this.currentPlayer) {
-            var tx = this.math.snapToFloor(this.currentPlayer.x, TILE_SIZE) / TILE_SIZE;
-            var ty = this.math.snapToFloor(this.currentPlayer.y, TILE_SIZE) / TILE_SIZE;
-            var tile = this.map.getTile(tx, ty, this.backgroundlayer.index, true);
-            console.log("collision with " + item.key);
+            console.log("collision with " + entity.key);
 
+            //bounces player in opposite direction, simulating blocked
             switch (player.lastMove) {
             case 'left':
-                player.x += TILE_SIZE;                
+                player.x += this.map.tileWidth;                
                 break;
             case 'right':
-                player.x -= TILE_SIZE;
+                player.x -= this.map.tileWidth;
                 break;
             case 'up':
-                player.y += TILE_SIZE;
+                player.y += this.map.tileWidth;
                 break;
             case 'down':
-                player.y -= TILE_SIZE;
+                player.y -= this.map.tileWidth;
                 break;
             }
         }
@@ -239,28 +233,28 @@ BaseBlitz.Game.prototype = {
     
     moveRight: function () {
         this.currentPlayer.lastMove = 'right';
-        this.currentPlayer.x += TILE_SIZE;
+        this.currentPlayer.x += this.map.tileWidth;
         this.getPoint(this.currentPlayer);
         console.log("move: " + this.currentPlayer.key);
     },
     
     moveLeft: function () {
         this.currentPlayer.lastMove = 'left';
-        this.currentPlayer.x -= TILE_SIZE;
+        this.currentPlayer.x -= this.map.tileWidth;
         this.getPoint(this.currentPlayer);
         console.log("move: " + this.currentPlayer.key);
     },
     
     moveUp: function () {
         this.currentPlayer.lastMove = 'up';
-        this.currentPlayer.y -= TILE_SIZE;
+        this.currentPlayer.y -= this.map.tileWidth;
         this.getPoint(this.currentPlayer);
         console.log("move: " + this.currentPlayer.key);
     },
     
     moveDown: function () {
         this.currentPlayer.lastMove = 'down';
-        this.currentPlayer.y += TILE_SIZE;
+        this.currentPlayer.y += this.map.tileWidth;
         this.getPoint(this.currentPlayer);
         console.log("move: " + this.currentPlayer.key);
     },
@@ -283,11 +277,11 @@ BaseBlitz.Game.prototype = {
     
     update: function () {
                          
-        this.game.physics.arcade.overlap(this.heroes, this.items, this.itemOverlap, null, this);
-        this.game.physics.arcade.overlap(this.monsters, this.items, this.itemOverlap, null, this);
+        this.game.physics.arcade.overlap(this.heroes, this.items, this.entityOverlap, null, this);
+        this.game.physics.arcade.overlap(this.monsters, this.items, this.entityOverlap, null, this);
         
-        this.game.physics.arcade.overlap(this.heroes, this.monsters, this.itemOverlap, null, this);
-        this.game.physics.arcade.overlap(this.monsters, this.heroes, this.itemOverlap, null, this);
+        this.game.physics.arcade.overlap(this.heroes, this.monsters, this.entityOverlap, null, this);
+        this.game.physics.arcade.overlap(this.monsters, this.heroes, this.entityOverlap, null, this);
 
         this.game.camera.follow(this.currentPlayer);
 
