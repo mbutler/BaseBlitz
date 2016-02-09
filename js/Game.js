@@ -9,11 +9,13 @@ BaseBlitz.Game.prototype = {
         this.initRolls = [];
         this.heroes = [];
         this.monsters = [];
-        this.players = [];
+        this.players = []; 
+        this.jinglebootsStats = {ac: 23, fort: 13, will: 11, ref: 10, surges: 2, ap: 1, speed: 6, wind: 1, conditions: [], skills: {}, powers: {}, inventory: {}};
     },
     
     
     create: function () {
+
         
         //create tilemap and set up layers
         this.map = this.game.add.tilemap('map1');
@@ -28,14 +30,19 @@ BaseBlitz.Game.prototype = {
         
         //heroes
         this.hero1 = this.game.add.sprite(75 * 1 + 3, 75 * 1 + 5, 'jingleboots');
+        this.hero1.characterSheet = this.jinglebootsStats;
         this.hero2 = this.game.add.sprite(75 * 1 + 3, 75 * 3 + 5, 'rattlesocks');
+        
         this.hero3 = this.game.add.sprite(75 * 2 + 3, 75 * 2  + 5, 'scoopercram');
+
         this.hero4 = this.game.add.sprite(75 * 3 + 3, 75 * 3 + 5, 'jumperstomp');
+        
         this.heroes = [this.hero1, this.hero2, this.hero3, this.hero4];
         
         //monsters
         this.monster1 = this.game.add.sprite(75 * 6 + 3, 75 * 9 + 5, 'spider');
         this.monster2 = this.game.add.sprite(75 * 8 + 3, 75 * 8 + 5, 'golem');
+        this.monster2.health = 12;
         this.monster3 = this.game.add.sprite(75 * 9 + 3, 75 * 9 + 5, 'fungus');
         this.monster4 = this.game.add.sprite(75 * 6 + 3, 75 * 7 + 5, 'blindheim');
         this.monsters = [this.monster1, this.monster2, this.monster3, this.monster4];
@@ -74,7 +81,7 @@ BaseBlitz.Game.prototype = {
         this.keyUp = this.game.input.keyboard.addKey(Phaser.Keyboard.UP);
         this.keyDown = this.game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
               
-        this.keyD.onDown.add(this.flankedEnemies, this);
+        this.keyD.onDown.add(this.debug, this);
         this.keyE.onDown.add(this.switchPlayer, this);
         //args: (callback, context, priority, entity('player' for this.currentPlayer or object), direction)  
         this.keyLeft.onDown.add(this.move, this, 0, 'player');
@@ -82,6 +89,12 @@ BaseBlitz.Game.prototype = {
         this.keyUp.onDown.add(this.move, this, 0, 'player');
         this.keyDown.onDown.add(this.move, this, 0, 'player');
                    
+    },
+    
+    debug: function () {
+
+           console.log(this.currentPlayer.characterSheet);
+
     },
     
     flankedEnemies: function (player) {
@@ -261,7 +274,7 @@ BaseBlitz.Game.prototype = {
             console.log(entity.key + " " + moveType + " left");
             this.flankedEnemies(entity);
             break;
-        case 'Right':                
+        case 'Right': 
             entity.x += this.map.tileWidth;            
             console.log(entity.key + " " + moveType + " right");
             this.flankedEnemies(entity);
