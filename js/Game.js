@@ -9,8 +9,16 @@ BaseBlitz.Game.prototype = {
         this.initRolls = [];
         this.heroes = [];
         this.monsters = [];
-        this.players = []; 
-        this.jinglebootsStats = {ac: 23, fort: 13, will: 11, ref: 10, surges: 2, ap: 1, speed: 6, wind: 1, conditions: [], skills: {}, powers: {}, inventory: {}};
+        this.players = [];
+        this.stats1 = {ac: 22, fort: 13, will: 9, ref: 10, surges: 2, ap: 1, speed: 6, wind: 1, reach: 1, conditions: {}, skills: {}, powers: {}, inventory: {}};
+        this.stats2 = {ac: 21, fort: 14, will: 10, ref: 10, surges: 2, ap: 1, speed: 6, wind: 1, reach: 1, conditions: {}, skills: {}, powers: {}, inventory: {}};
+        this.stats3 = {ac: 20, fort: 15, will: 11, ref: 10, surges: 2, ap: 1, speed: 6, wind: 1, reach: 1, conditions: {}, skills: {}, powers: {}, inventory: {}};
+        this.stats4 = {ac: 19, fort: 16, will: 12, ref: 10, surges: 2, ap: 1, speed: 6, wind: 1, reach: 1, conditions: {}, skills: {}, powers: {}, inventory: {}};
+        this.stats5 = {ac: 18, fort: 15, will: 13, ref: 10, surges: 2, ap: 1, speed: 6, wind: 1, reach: 1, conditions: {}, skills: {}, powers: {}, inventory: {}};
+        this.stats6 = {ac: 17, fort: 13, will: 8, ref: 10, surges: 2, ap: 1, speed: 6, wind: 1, reach: 1, conditions: {}, skills: {}, powers: {}, inventory: {}};
+        this.stats7 = {ac: 16, fort: 12, will: 16, ref: 10, surges: 2, ap: 1, speed: 6, wind: 1, reach: 1, conditions: {}, skills: {}, powers: {}, inventory: {}};
+        this.stats8 = {ac: 14, fort: 11, will: 13, ref: 10, surges: 2, ap: 1, speed: 6, wind: 1, reach: 1, conditions: {}, skills: {}, powers: {}, inventory: {}};
+        
     },
     
     
@@ -30,21 +38,24 @@ BaseBlitz.Game.prototype = {
         
         //heroes
         this.hero1 = this.game.add.sprite(75 * 1 + 3, 75 * 1 + 5, 'jingleboots');
-        this.hero1.characterSheet = this.jinglebootsStats;
+        this.hero1.stats = this.stats1;
         this.hero2 = this.game.add.sprite(75 * 1 + 3, 75 * 3 + 5, 'rattlesocks');
-        
+        this.hero2.stats = this.stats2
         this.hero3 = this.game.add.sprite(75 * 2 + 3, 75 * 2  + 5, 'scoopercram');
-
+        this.hero3.stats = this.stats3;
         this.hero4 = this.game.add.sprite(75 * 3 + 3, 75 * 3 + 5, 'jumperstomp');
-        
+        this.hero4.stats = this.stats4;
         this.heroes = [this.hero1, this.hero2, this.hero3, this.hero4];
         
         //monsters
         this.monster1 = this.game.add.sprite(75 * 6 + 3, 75 * 9 + 5, 'spider');
-        this.monster2 = this.game.add.sprite(75 * 8 + 3, 75 * 8 + 5, 'golem');
-        this.monster2.health = 12;
+        this.monster1.stats = this.stats5;
+        this.monster2 = this.game.add.sprite(75 * 8 + 3, 75 * 8 + 5, 'golem'); 
+        this.monster2.stats = this.stats6;
         this.monster3 = this.game.add.sprite(75 * 9 + 3, 75 * 9 + 5, 'fungus');
+        this.monster3.stats = this.stats7;
         this.monster4 = this.game.add.sprite(75 * 6 + 3, 75 * 7 + 5, 'blindheim');
+        this.monster4.stats = this.stats8;
         this.monsters = [this.monster1, this.monster2, this.monster3, this.monster4];
         
         //reduce heroes and monsters into list of all players
@@ -93,34 +104,38 @@ BaseBlitz.Game.prototype = {
     
     debug: function () {
 
-           console.log(this.currentPlayer.characterSheet);
+        console.log(this.currentPlayer.stats.ac);  
 
     },
+    
     
     flankedEnemies: function (player) {
         //player = this.currentPlayer; //debug mode
         var flankedList = [];
         var playerPoint = this.getPoint(player);
-        var adjacentList = this.adjacentEnemies(player, 1);
+        var adjacentList = this.adjacentEnemies(player, player.stats.reach);
+        var i = 0, j = 0, k = 0;
+        var enemyPoint = {}, flankPoint = {}, allyPoint = {};
+        var dx = 0, dy = 0;
         
         //checks the point just ahead of adjacent enemies to see if ally is there
-        for (var i = 0; i < adjacentList.length; i++) {
-            var enemyPoint = this.getPoint(adjacentList[i]);
-            var dx = (enemyPoint.x - playerPoint.x) + enemyPoint.x;
-            var dy = (enemyPoint.y - playerPoint.y) + enemyPoint.y;
-            var flankPoint = new Phaser.Point(dx, dy);
+        for (i = 0; i < adjacentList.length; i++) {
+            enemyPoint = this.getPoint(adjacentList[i]);
+            dx = (enemyPoint.x - playerPoint.x) + enemyPoint.x;
+            dy = (enemyPoint.y - playerPoint.y) + enemyPoint.y;
+            flankPoint = new Phaser.Point(dx, dy);
             
             if (this.entityType(player) === 'hero') {
-                for (var j = 0; j < this.heroes.length; j++) {
-                    var allyPoint = this.getPoint(this.heroes[j]);
+                for (j = 0; j < this.heroes.length; j++) {
+                    allyPoint = this.getPoint(this.heroes[j]);
                     if (allyPoint.equals(flankPoint)) {
                         console.log("flanking " + adjacentList[i].key);
                         flankedList.push(adjacentList[i]);
                     }
                 }
             } else {
-                for (var k = 0; k < this.monsters.length; k++) {
-                    var allyPoint = this.getPoint(this.monsters[k]);
+                for (k = 0; k < this.monsters.length; k++) {
+                    allyPoint = this.getPoint(this.monsters[k]);
                     if (allyPoint.equals(flankPoint)) {
                         console.log("flanking " + adjacentList[i].key);
                         flankedList.push(adjacentList[i]);
@@ -131,34 +146,39 @@ BaseBlitz.Game.prototype = {
         return flankedList;
     },
     
+    //finds all enemies adjacent to a player. default reach is 1 square
     adjacentEnemies: function (player, reach) {
         //player = this.currentPlayer; //debug mode
         var adjacentList = [];
         var playerPoint = this.getPoint(player);
+        var enemyPoint = {};
+        var i = 0;
+                
         //loops through opposite team and finds each with a distance of 1 from player, aka 'adjacent'
         if (this.entityType(player) === 'hero') {
-            for (var i = 0; i < this.monsters.length; i++) {
-                var enemyPoint = this.getPoint(this.monsters[i]);                
-                if (playerPoint.distance(enemyPoint, true) == reach) {
+            for (i = 0; i < this.monsters.length; i++) {
+                enemyPoint = this.getPoint(this.monsters[i]);                
+                if (playerPoint.distance(enemyPoint, true) === reach) {
                     adjacentList.push(this.monsters[i]);                    
                 }
             }            
         } else {
-            for (var i=0; i < this.heroes.length; i++) {
-                var enemyPoint = this.getPoint(this.heroes[i]);
-                if (playerPoint.distance(enemyPoint, true) == reach) {
+            for (i = 0; i < this.heroes.length; i++) {
+                enemyPoint = this.getPoint(this.heroes[i]);
+                if (playerPoint.distance(enemyPoint, true) === reach) {
                     adjacentList.push(this.heroes[i]);                    
                 }
             }
         }
-        //console.log(adjacentList);
         return adjacentList;
     },
     
+    //type checker for entities. returns either hero, monster, or item
     entityType: function (entity) {
         //entity = this.currentPlayer; //debug mode
         var index = this.players.indexOf(entity);
-        var entityType = null;
+        var entityType = '';
+        
         if (index != -1) {
             if (this.heroes.indexOf(entity) != -1) {
                 entityType = 'hero';
@@ -168,11 +188,11 @@ BaseBlitz.Game.prototype = {
         } else {
             entityType = 'item';
         }
-        //console.log(objectType);
         return entityType;
     },
     
     initManager: function (player, roll) {
+        var position = 0;
         //need two lists, the rolls, and the names
         this.initRolls.push(roll);
         //sort numbers
@@ -181,10 +201,11 @@ BaseBlitz.Game.prototype = {
         }
         this.initRolls.sort(sortNumber);
         //find the position to use
-        var position = this.initRolls.indexOf(roll);
+        position = this.initRolls.indexOf(roll);
         this.initOrder.splice(position, 0, player);
     },
     
+    //returns a point object of current location of any entity. x,y coordinates
     getPoint: function (entity) {        
         var tx = this.game.math.snapToFloor(entity.x, this.map.tileWidth) / this.map.tileWidth;
         var ty = this.game.math.snapToFloor(entity.y, this.map.tileWidth) / this.map.tileWidth;
@@ -193,9 +214,10 @@ BaseBlitz.Game.prototype = {
     },
     
     createItems: function (kind, layer) {
+        var result = [];
         this.items = this.game.add.group();
         this.items.enableBody = true;
-        var result = this.findObjectsByType(kind, this.map, layer);
+        result = this.findObjectsByType(kind, this.map, layer);
         result.forEach(function (element) {
             this.createFromTiledObject(element, this.items);
         },  this);
@@ -246,25 +268,31 @@ BaseBlitz.Game.prototype = {
     },
     
     //use direction param to force movement of player or other entity
-    move: function (context, type, direction) {        
-        if (type == 'player') {
-            var entity = this.currentPlayer;
-            if (direction == null) {
+    //pass in 'player' string as type to use current player
+    move: function (context, type, direction) {
+        var entity = {}, moveType = '', adjacentList = [];
+        var i = 0;
+        
+        if (type === 'player') {
+            //handle a player pressing a key
+            entity = this.currentPlayer;
+            if (direction === undefined) {
                 direction = context.event.keyIdentifier;
             }
             
-            if (context.shiftKey == true) {
-                var moveType = "shifts";
+            //player can avoid attack of opportunity by shifting through squares
+            if (context.shiftKey === true) {
+                moveType = "shifts";
             } else {
-                var moveType = "moves";
-                var adjacentList = this.adjacentEnemies(entity, 1);
-                //console.log(adjacentList);
-                for (var i = 0; i < adjacentList.length; i++) {
+                moveType = "moves";
+                //all adjacent enemies get an attack of opportunity
+                adjacentList = this.adjacentEnemies(entity, entity.stats.reach);                
+                for (i = 0; i < adjacentList.length; i++) {
                     console.log(adjacentList[i].key + " gets an attack of opportunity!");
                 }
             }
         } else {
-            var entity = type;
+            entity = type;
         } 
         
         entity.lastMove = direction;
@@ -294,15 +322,16 @@ BaseBlitz.Game.prototype = {
         
     switchPlayer: function () {
         var position = this.initOrder.indexOf(this.currentPlayer);
+        var nextPosition, nextPlayer;
         
         //loop around initiative
         if (position === this.initOrder.length - 1) {
-            var nextPosition = 0;
+            nextPosition = 0;
         } else {
-            var nextPosition = position + 1;
+            nextPosition = position + 1;
         }
         
-        var nextPlayer = this.initOrder[nextPosition];
+        nextPlayer = this.initOrder[nextPosition];
         this.currentPlayer = nextPlayer;
         this.game.world.bringToTop(this.currentPlayer);
         console.log("It is now " + this.currentPlayer.key + "'s turn.");
