@@ -50,7 +50,7 @@ BaseBlitz.Game.prototype = {
         //monsters
         this.monster1 = this.game.add.sprite(75 * 6 + 3, 75 * 9 + 5, 'spider');
         this.monster1.stats = this.stats5;
-        this.monster2 = this.game.add.sprite(75 * 8 + 3, 75 * 8 + 5, 'golem'); 
+        this.monster2 = this.game.add.sprite(75 * 8 + 3, 75 * 8 + 5, 'golem');
         this.monster2.stats = this.stats6;
         this.monster3 = this.game.add.sprite(75 * 9 + 3, 75 * 9 + 5, 'fungus');
         this.monster3.stats = this.stats7;
@@ -104,29 +104,34 @@ BaseBlitz.Game.prototype = {
     
     debug: function () {
 
-        console.log(this.currentPlayer.stats.ac);  
+        console.log(this.currentPlayer.stats.ac);
 
     },
     
     
     flankedEnemies: function (player) {
         //player = this.currentPlayer; //debug mode
-        var flankedList = [];
-        var playerPoint = this.getPoint(player);
-        var adjacentList = this.adjacentEnemies(player, player.stats.reach);
-        var i = 0, j = 0, k = 0;
-        var enemyPoint = {}, flankPoint = {}, allyPoint = {};
-        var dx = 0, dy = 0;
+        var flankedList = [],
+            enemyPoint = {},
+            flankPoint = {},
+            allyPoint = {},
+            playerPoint = this.getPoint(player),
+            adjacentList = this.adjacentEnemies(player, player.stats.reach),
+            i = 0,
+            j = 0,
+            k = 0,
+            dx = 0,
+            dy = 0;
         
         //checks the point just ahead of adjacent enemies to see if ally is there
-        for (i = 0; i < adjacentList.length; i++) {
+        for (i = 0; i < adjacentList.length; i += 1) {
             enemyPoint = this.getPoint(adjacentList[i]);
             dx = (enemyPoint.x - playerPoint.x) + enemyPoint.x;
             dy = (enemyPoint.y - playerPoint.y) + enemyPoint.y;
             flankPoint = new Phaser.Point(dx, dy);
             
             if (this.entityType(player) === 'hero') {
-                for (j = 0; j < this.heroes.length; j++) {
+                for (j = 0; j < this.heroes.length; j += 1) {
                     allyPoint = this.getPoint(this.heroes[j]);
                     if (allyPoint.equals(flankPoint)) {
                         console.log("flanking " + adjacentList[i].key);
@@ -134,7 +139,7 @@ BaseBlitz.Game.prototype = {
                     }
                 }
             } else {
-                for (k = 0; k < this.monsters.length; k++) {
+                for (k = 0; k < this.monsters.length; k += 1) {
                     allyPoint = this.getPoint(this.monsters[k]);
                     if (allyPoint.equals(flankPoint)) {
                         console.log("flanking " + adjacentList[i].key);
@@ -148,25 +153,26 @@ BaseBlitz.Game.prototype = {
     
     //finds all enemies adjacent to a player. default reach is 1 square
     adjacentEnemies: function (player, reach) {
+        console.log(this);
         //player = this.currentPlayer; //debug mode
-        var adjacentList = [];
-        var playerPoint = this.getPoint(player);
-        var enemyPoint = {};
-        var i = 0;
+        var adjacentList = [],
+            playerPoint = this.getPoint(player),
+            enemyPoint = {},
+            i = 0;
                 
         //loops through opposite team and finds each with a distance of 1 from player, aka 'adjacent'
         if (this.entityType(player) === 'hero') {
-            for (i = 0; i < this.monsters.length; i++) {
-                enemyPoint = this.getPoint(this.monsters[i]);                
+            for (i = 0; i < this.monsters.length; i += 1) {
+                enemyPoint = this.getPoint(this.monsters[i]);
                 if (playerPoint.distance(enemyPoint, true) === reach) {
-                    adjacentList.push(this.monsters[i]);                    
+                    adjacentList.push(this.monsters[i]);
                 }
-            }            
+            }
         } else {
-            for (i = 0; i < this.heroes.length; i++) {
+            for (i = 0; i < this.heroes.length; i += 1) {
                 enemyPoint = this.getPoint(this.heroes[i]);
                 if (playerPoint.distance(enemyPoint, true) === reach) {
-                    adjacentList.push(this.heroes[i]);                    
+                    adjacentList.push(this.heroes[i]);
                 }
             }
         }
@@ -176,11 +182,11 @@ BaseBlitz.Game.prototype = {
     //type checker for entities. returns either hero, monster, or item
     entityType: function (entity) {
         //entity = this.currentPlayer; //debug mode
-        var index = this.players.indexOf(entity);
-        var entityType = '';
+        var index = this.players.indexOf(entity),
+            entityType = '';
         
-        if (index != -1) {
-            if (this.heroes.indexOf(entity) != -1) {
+        if (index !== -1) {
+            if (this.heroes.indexOf(entity) !== -1) {
                 entityType = 'hero';
             } else {
                 entityType = 'monster';
@@ -206,10 +212,10 @@ BaseBlitz.Game.prototype = {
     },
     
     //returns a point object of current location of any entity. x,y coordinates
-    getPoint: function (entity) {        
-        var tx = this.game.math.snapToFloor(entity.x, this.map.tileWidth) / this.map.tileWidth;
-        var ty = this.game.math.snapToFloor(entity.y, this.map.tileWidth) / this.map.tileWidth;
-        var point = new Phaser.Point(tx, ty);       
+    getPoint: function (entity) {
+        var tx = this.game.math.snapToFloor(entity.x, this.map.tileWidth) / this.map.tileWidth,
+            ty = this.game.math.snapToFloor(entity.y, this.map.tileWidth) / this.map.tileWidth,
+            point = new Phaser.Point(tx, ty);
         return point;
     },
     
@@ -252,7 +258,7 @@ BaseBlitz.Game.prototype = {
             //bounces player in opposite direction, simulating blocked
             switch (player.lastMove) {
             case 'Left':
-                player.x += this.map.tileWidth;                
+                player.x += this.map.tileWidth;
                 break;
             case 'Right':
                 player.x -= this.map.tileWidth;
@@ -270,8 +276,10 @@ BaseBlitz.Game.prototype = {
     //use direction param to force movement of player or other entity
     //pass in 'player' string as type to use current player
     move: function (context, type, direction) {
-        var entity = {}, moveType = '', adjacentList = [];
-        var i = 0;
+        var entity = {},
+            moveType = '',
+            adjacentList = [],
+            i = 0;
         
         if (type === 'player') {
             //handle a player pressing a key
@@ -286,43 +294,44 @@ BaseBlitz.Game.prototype = {
             } else {
                 moveType = "moves";
                 //all adjacent enemies get an attack of opportunity
-                adjacentList = this.adjacentEnemies(entity, entity.stats.reach);                
-                for (i = 0; i < adjacentList.length; i++) {
+                adjacentList = this.adjacentEnemies(entity, entity.stats.reach);
+                for (i = 0; i < adjacentList.length; i += 1) {
                     console.log(adjacentList[i].key + " gets an attack of opportunity!");
                 }
             }
         } else {
             entity = type;
-        } 
+        }
         
         entity.lastMove = direction;
         switch (direction) {
-        case 'Left':            
-            entity.x -= this.map.tileWidth;            
+        case 'Left':
+            entity.x -= this.map.tileWidth;
             console.log(entity.key + " " + moveType + " left");
             this.flankedEnemies(entity);
             break;
-        case 'Right': 
-            entity.x += this.map.tileWidth;            
+        case 'Right':
+            entity.x += this.map.tileWidth;
             console.log(entity.key + " " + moveType + " right");
             this.flankedEnemies(entity);
             break;
-        case 'Up':            
+        case 'Up':
             entity.y -= this.map.tileWidth;
             console.log(entity.key + " " + moveType + " up");
             this.flankedEnemies(entity);
             break;
-        case 'Down':            
+        case 'Down':
             entity.y += this.map.tileWidth;
             console.log(entity.key + " " + moveType + " down");
             this.flankedEnemies(entity);
             break;
         }
-    },    
+    },
         
     switchPlayer: function () {
-        var position = this.initOrder.indexOf(this.currentPlayer);
-        var nextPosition, nextPlayer;
+        var position = this.initOrder.indexOf(this.currentPlayer),
+            nextPosition,
+            nextPlayer;
         
         //loop around initiative
         if (position === this.initOrder.length - 1) {
