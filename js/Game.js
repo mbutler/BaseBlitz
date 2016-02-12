@@ -21,7 +21,6 @@ BaseBlitz.Game.prototype = {
         
     },
     
-    
     create: function () {
 
         
@@ -34,13 +33,13 @@ BaseBlitz.Game.prototype = {
         //tileset 'statue' in Tiled, type 'statue' in Tiled custom properties
         this.map.addTilesetImage('statue', 'statue');
         this.createItems('statue', 'objectsLayer');
-        this.trapdoor = this.game.add.sprite(75 * 4, 75 * 5, 'trapdoor');
-        
+        //this.trapdoor = this.game.add.sprite(75 * 4, 75 * 5, 'trapdoor');
+    
         //heroes
         this.hero1 = this.game.add.sprite(75 * 1 + 3, 75 * 1 + 5, 'jingleboots');
         this.hero1.stats = this.stats1;
         this.hero2 = this.game.add.sprite(75 * 1 + 3, 75 * 3 + 5, 'rattlesocks');
-        this.hero2.stats = this.stats2
+        this.hero2.stats = this.stats2;
         this.hero3 = this.game.add.sprite(75 * 2 + 3, 75 * 2  + 5, 'scoopercram');
         this.hero3.stats = this.stats3;
         this.hero4 = this.game.add.sprite(75 * 3 + 3, 75 * 3 + 5, 'jumperstomp');
@@ -63,9 +62,6 @@ BaseBlitz.Game.prototype = {
             return a.concat(b);
         });
         
-        //enable physics for all player sprites
-        this.game.physics.arcade.enable(this.heroes);
-        this.game.physics.arcade.enable(this.monsters);
         
         //////////////////////////MANUAL GAME SETUP/////////////////////       
         
@@ -104,10 +100,18 @@ BaseBlitz.Game.prototype = {
     
     debug: function () {
 
-        console.log(this.currentPlayer.stats.ac);
+        var barriers = this.blockedSquares(this.currentPlayer);
+        console.log(barriers);
 
     },
     
+    attack: function (a, b, c, d) {
+        console.log(a);
+        console.log(b);
+        console.log(c);
+        console.log(d);
+        //console.log(e);
+    },
     
     flankedEnemies: function (player) {
         //player = this.currentPlayer; //debug mode
@@ -151,14 +155,42 @@ BaseBlitz.Game.prototype = {
         return flankedList;
     },
     
-    //finds all enemies adjacent to a player. default reach is 1 square
+    //returns an array of all blocked squares adjacent to the player
+    blockedSquares: function (player) {
+        var adjacentList = [],
+            items = this.items.children,
+            enemies = this.adjacentEnemies(player),
+            barriers = [],
+            playerPoint = this.getPoint(player),
+            itemPoint = {},
+            i = 0;
+        
+        //get a list of all possible barriers. merge items and enemies
+        barriers = [items, enemies].reduce(function (a, b) {
+            return a.concat(b);
+        });
+        
+        //find only the squares that are adjacent and blocked
+        for (i = 0; i < barriers.length; i += 1) {
+            itemPoint = this.getPoint(barriers[i]);
+            if (playerPoint.distance(itemPoint, true) === 1) {
+                adjacentList.push(itemPoint);
+            }
+        }
+        return adjacentList;
+    },
+    
+    //finds all enemies adjacent to a player. 
     adjacentEnemies: function (player, reach) {
-        console.log(this);
         //player = this.currentPlayer; //debug mode
         var adjacentList = [],
             playerPoint = this.getPoint(player),
             enemyPoint = {},
             i = 0;
+        
+        if (reach === undefined) {
+            reach = 1;
+        }
                 
         //loops through opposite team and finds each with a distance of 1 from player, aka 'adjacent'
         if (this.entityType(player) === 'hero') {
@@ -219,6 +251,40 @@ BaseBlitz.Game.prototype = {
         return point;
     },
     
+    //current:Point, direction:Up,Down,Right,Left, squares:number
+    lookAhead: function (current, direction, squares) {
+        var cx = current.x,
+            cy = current.y,
+            tx = 0,
+            ty = 0,
+            point = {};
+        
+        switch (direction) {
+        case 'Up':
+            tx = cx;
+            ty = cy - squares;
+            point = new Phaser.Point(tx, ty);
+            return point;
+        case 'Right':
+            tx = cx + squares;
+            ty = cy;
+            point = new Phaser.Point(tx, ty);
+            return point;
+        case 'Left':
+            tx = cx - squares;
+            ty = cy;
+            point = new Phaser.Point(tx, ty);
+            return point;
+        case 'Down':
+            tx = cx;
+            ty = cy + squares;
+            point = new Phaser.Point(tx, ty);
+            return point;
+        }
+            
+    },
+    
+    //creates a group of sprites from the map
     createItems: function (kind, layer) {
         var result = [];
         this.items = this.game.add.group();
@@ -250,30 +316,35 @@ BaseBlitz.Game.prototype = {
         });
     },
     
-    //callback from overlap function
-    entityOverlap: function (player, entity) {
-        if (player === this.currentPlayer) {
-            console.log(entity);
-
-            //bounces player in opposite direction, simulating blocked
-            switch (player.lastMove) {
-            case 'Left':
-                player.x += this.map.tileWidth;
-                break;
-            case 'Right':
-                player.x -= this.map.tileWidth;
-                break;
-            case 'Up':
-                player.y += this.map.tileWidth;
-                break;
-            case 'Down':
-                player.y -= this.map.tileWidth;
-                break;
+    //finds out if the sqaure ahead of the moving player is blocked
+    isBlocked: function (entity, direction) {
+        var playerPoint = {},
+            barriers = [],
+            lookPoint = {},
+            k = 0,
+            isBlocked;
+        
+        //get the point where the player is at, is looking to move, and all blocked adjacent points
+        playerPoint = this.getPoint(entity);
+        barriers = this.blockedSquares(entity);
+        lookPoint = this.lookAhead(playerPoint, direction, 1);
+        
+        //looks in an array for an object and returns true if it's there
+        function include(arr, obj) {
+            var contains = false;
+            for (k = 0; k < arr.length; k += 1) {
+                if (arr[k].equals(obj)) {
+                    contains = true;
+                }
             }
+            return contains;
         }
+        
+        isBlocked = include(barriers, lookPoint);
+        return isBlocked;
+        
     },
     
-    //use direction param to force movement of player or other entity
     //pass in 'player' string as type to use current player
     move: function (context, type, direction) {
         var entity = {},
@@ -284,10 +355,15 @@ BaseBlitz.Game.prototype = {
         if (type === 'player') {
             //handle a player pressing a key
             entity = this.currentPlayer;
+            
             if (direction === undefined) {
                 direction = context.event.keyIdentifier;
             }
-            
+        } else {
+            entity = type;
+        }
+
+        if (!this.isBlocked(entity, direction)) {
             //player can avoid attack of opportunity by shifting through squares
             if (context.shiftKey === true) {
                 moveType = "shifts";
@@ -299,39 +375,36 @@ BaseBlitz.Game.prototype = {
                     console.log(adjacentList[i].key + " gets an attack of opportunity!");
                 }
             }
-        } else {
-            entity = type;
-        }
-        
-        entity.lastMove = direction;
-        switch (direction) {
-        case 'Left':
-            entity.x -= this.map.tileWidth;
-            console.log(entity.key + " " + moveType + " left");
-            this.flankedEnemies(entity);
-            break;
-        case 'Right':
-            entity.x += this.map.tileWidth;
-            console.log(entity.key + " " + moveType + " right");
-            this.flankedEnemies(entity);
-            break;
-        case 'Up':
-            entity.y -= this.map.tileWidth;
-            console.log(entity.key + " " + moveType + " up");
-            this.flankedEnemies(entity);
-            break;
-        case 'Down':
-            entity.y += this.map.tileWidth;
-            console.log(entity.key + " " + moveType + " down");
-            this.flankedEnemies(entity);
-            break;
+
+            switch (direction) {
+            case 'Left':
+                entity.x -= this.map.tileWidth;
+                console.log(entity.key + " " + moveType + " left");
+                this.flankedEnemies(entity);
+                break;
+            case 'Right':
+                entity.x += this.map.tileWidth;
+                console.log(entity.key + " " + moveType + " right");
+                this.flankedEnemies(entity);
+                break;
+            case 'Up':
+                entity.y -= this.map.tileWidth;
+                console.log(entity.key + " " + moveType + " up");
+                this.flankedEnemies(entity);
+                break;
+            case 'Down':
+                entity.y += this.map.tileWidth;
+                console.log(entity.key + " " + moveType + " down");
+                this.flankedEnemies(entity);
+                break;
+            }
         }
     },
         
     switchPlayer: function () {
         var position = this.initOrder.indexOf(this.currentPlayer),
-            nextPosition,
-            nextPlayer;
+            nextPosition = 0,
+            nextPlayer = {};
         
         //loop around initiative
         if (position === this.initOrder.length - 1) {
@@ -347,12 +420,6 @@ BaseBlitz.Game.prototype = {
     },
     
     update: function () {
-                         
-        this.game.physics.arcade.overlap(this.heroes, this.items, this.entityOverlap, null, this);
-        this.game.physics.arcade.overlap(this.monsters, this.items, this.entityOverlap, null, this);
-        
-        this.game.physics.arcade.overlap(this.heroes, this.monsters, this.entityOverlap, null, this);
-        this.game.physics.arcade.overlap(this.monsters, this.heroes, this.entityOverlap, null, this);
 
         this.game.camera.follow(this.currentPlayer);
 
