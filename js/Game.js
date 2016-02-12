@@ -81,12 +81,12 @@ BaseBlitz.Game.prototype = {
         ////////////////////////////////////////////////////////////////
         
         //direction controller//       
-        this.keyD = this.game.input.keyboard.addKey(Phaser.Keyboard.D); // debug mode
-        this.keyE = this.game.input.keyboard.addKey(Phaser.Keyboard.E);
-        this.keyLeft = this.game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
-        this.keyRight = this.game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
-        this.keyUp = this.game.input.keyboard.addKey(Phaser.Keyboard.UP);
-        this.keyDown = this.game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
+        this.keyD = this.game.input.keyboard.addKey(Phaser.KeyCode.D); // debug mode
+        this.keyE = this.game.input.keyboard.addKey(Phaser.KeyCode.E);
+        this.keyLeft = this.game.input.keyboard.addKey(Phaser.KeyCode.LEFT);
+        this.keyRight = this.game.input.keyboard.addKey(Phaser.KeyCode.RIGHT);
+        this.keyUp = this.game.input.keyboard.addKey(Phaser.KeyCode.UP);
+        this.keyDown = this.game.input.keyboard.addKey(Phaser.KeyCode.DOWN);
               
         this.keyD.onDown.add(this.debug, this);
         this.keyE.onDown.add(this.switchPlayer, this);
@@ -370,10 +370,7 @@ BaseBlitz.Game.prototype = {
             } else {
                 moveType = "moves";
                 //all adjacent enemies get an attack of opportunity
-                adjacentList = this.adjacentEnemies(entity, entity.stats.reach);
-                for (i = 0; i < adjacentList.length; i += 1) {
-                    console.log(adjacentList[i].key + " gets an attack of opportunity!");
-                }
+                this.opportunityAttack(entity);
             }
 
             switch (direction) {
@@ -398,6 +395,13 @@ BaseBlitz.Game.prototype = {
                 this.flankedEnemies(entity);
                 break;
             }
+        }
+    },
+    
+    opportunityAttack: function (defender) {
+        var adjacentList = this.adjacentEnemies(defender);
+        for (i = 0; i < adjacentList.length; i += 1) {
+            console.log(adjacentList[i].key + " gets an opportunity attack!");
         }
     },
         
