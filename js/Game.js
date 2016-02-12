@@ -87,6 +87,22 @@ BaseBlitz.Game.prototype = {
         this.keyRight = this.game.input.keyboard.addKey(Phaser.KeyCode.RIGHT);
         this.keyUp = this.game.input.keyboard.addKey(Phaser.KeyCode.UP);
         this.keyDown = this.game.input.keyboard.addKey(Phaser.KeyCode.DOWN);
+        
+        this.keyEight = this.game.input.keyboard.addKey(Phaser.KeyCode.EIGHT);
+        this.keySeven = this.game.input.keyboard.addKey(Phaser.KeyCode.SEVEN);
+        this.keyFour = this.game.input.keyboard.addKey(Phaser.KeyCode.FOUR);
+        this.keyOne = this.game.input.keyboard.addKey(Phaser.KeyCode.ONE);
+        this.keyTwo = this.game.input.keyboard.addKey(Phaser.KeyCode.TWO);
+        this.keyThree = this.game.input.keyboard.addKey(Phaser.KeyCode.THREE);
+        this.keySix = this.game.input.keyboard.addKey(Phaser.KeyCode.SIX);
+        this.keyNine = this.game.input.keyboard.addKey(Phaser.KeyCode.NINE);
+        this.keyFive = this.game.input.keyboard.addKey(Phaser.KeyCode.FIVE);
+        
+        this.keyU = this.game.input.keyboard.addKey(Phaser.KeyCode.U);
+        this.keyO = this.game.input.keyboard.addKey(Phaser.KeyCode.O);
+        this.keyJ = this.game.input.keyboard.addKey(Phaser.KeyCode.J);
+        this.keyK = this.game.input.keyboard.addKey(Phaser.KeyCode.K);
+        this.keyL = this.game.input.keyboard.addKey(Phaser.KeyCode.L);
               
         this.keyD.onDown.add(this.debug, this);
         this.keyE.onDown.add(this.switchPlayer, this);
@@ -95,7 +111,22 @@ BaseBlitz.Game.prototype = {
         this.keyRight.onDown.add(this.move, this, 0, 'player');
         this.keyUp.onDown.add(this.move, this, 0, 'player');
         this.keyDown.onDown.add(this.move, this, 0, 'player');
-                   
+        
+        this.keyEight.onDown.add(this.move, this, 0, 'player');
+        this.keySeven.onDown.add(this.move, this, 0, 'player');
+        this.keyFour.onDown.add(this.move, this, 0, 'player');
+        this.keyOne.onDown.add(this.move, this, 0, 'player');
+        this.keyTwo.onDown.add(this.move, this, 0, 'player');
+        this.keyThree.onDown.add(this.move, this, 0, 'player');
+        this.keySix.onDown.add(this.move, this, 0, 'player');
+        this.keyNine.onDown.add(this.move, this, 0, 'player');
+        this.keyFive.onDown.add(this.move, this, 0, 'player');
+        
+        this.keyU.onDown.add(this.move, this, 0, 'player');
+        this.keyO.onDown.add(this.move, this, 0, 'player');
+        this.keyJ.onDown.add(this.move, this, 0, 'player');
+        this.keyK.onDown.add(this.move, this, 0, 'player');
+        this.keyL.onDown.add(this.move, this, 0, 'player');
     },
     
     debug: function () {
@@ -252,32 +283,55 @@ BaseBlitz.Game.prototype = {
     },
     
     //current:Point, direction:Up,Down,Right,Left, squares:number
-    lookAhead: function (current, direction, squares) {
+    lookAhead: function (current, keycode, squares) {
         var cx = current.x,
             cy = current.y,
             tx = 0,
             ty = 0,
+            direction = '',
             point = {};
         
+        direction = this.changeKeyCode(keycode);
+        
         switch (direction) {
-        case 'Up':
+        case 'N':
             tx = cx;
             ty = cy - squares;
             point = new Phaser.Point(tx, ty);
             return point;
-        case 'Right':
+        case 'E':
             tx = cx + squares;
             ty = cy;
             point = new Phaser.Point(tx, ty);
             return point;
-        case 'Left':
+        case 'W':
             tx = cx - squares;
             ty = cy;
             point = new Phaser.Point(tx, ty);
             return point;
-        case 'Down':
+        case 'S':
             tx = cx;
             ty = cy + squares;
+            point = new Phaser.Point(tx, ty);
+            return point;
+        case 'NW':
+            ty = cy - squares;
+            tx = cx - squares;
+            point = new Phaser.Point(tx, ty);
+            return point;
+        case 'SW':
+            tx = cx - squares;
+            ty = cy + squares;
+            point = new Phaser.Point(tx, ty);
+            return point;
+        case 'SE':
+            tx = cx + squares;
+            ty = cy + squares;
+            point = new Phaser.Point(tx, ty);
+            return point;
+        case 'NE':
+            ty = cy - squares;
+            tx = cx + squares;
             point = new Phaser.Point(tx, ty);
             return point;
         }
@@ -345,10 +399,50 @@ BaseBlitz.Game.prototype = {
         
     },
     
+    changeKeyCode: function (key) {
+        var direction = '';
+        /*
+        U+0038  8
+        U+0037  7
+        U+0034  4
+        U+0031  1
+        U+0032  2
+        U+0033  3
+        U+0036  6
+        U+0039  9
+        U+0035  5
+        U+0055  u
+        U+004F  o
+        U+004A  j
+        U+004B  k
+        U+004C  l
+        */        
+        if (key === 'U+0038' || key === 'Up') {
+            direction = "N";            
+        } else if (key === 'U+0037') {
+            direction = 'NW';            
+        } else if (key === 'U+0034' || key === 'Left' || key === 'U+0055') {
+            direction = 'W';            
+        } else if (key === 'U+0031' || key === 'U+004A') {
+            direction = 'SW';            
+        } else if (key === 'U+0032' || key === 'Down' || key === 'U+004B') {
+            direction = 'S';           
+        } else if (key === 'U+0033' || key === 'U+004C') {
+            direction = 'SE';            
+        } else if (key === 'U+0036' || key === 'Right' || key === 'U+004F') {
+            direction = 'E';            
+        } else if (key === 'U+0039') {
+            direction = 'NE';            
+        }
+        
+        return direction;
+    },
+    
     //pass in 'player' string as type to use current player
-    move: function (context, type, direction) {
+    move: function (context, type, keycode) {
         var entity = {},
             moveType = '',
+            direction = '',
             adjacentList = [],
             i = 0;
         
@@ -356,14 +450,14 @@ BaseBlitz.Game.prototype = {
             //handle a player pressing a key
             entity = this.currentPlayer;
             
-            if (direction === undefined) {
-                direction = context.event.keyIdentifier;
+            if (keycode === undefined) {
+                keycode = context.event.keyIdentifier;
             }
         } else {
             entity = type;
         }
 
-        if (!this.isBlocked(entity, direction)) {
+        if (!this.isBlocked(entity, keycode)) {
             //player can avoid attack of opportunity by shifting through squares
             if (context.shiftKey === true) {
                 moveType = "shifts";
@@ -372,26 +466,52 @@ BaseBlitz.Game.prototype = {
                 //all adjacent enemies get an attack of opportunity
                 this.opportunityAttack(entity);
             }
+            
+            direction = this.changeKeyCode(keycode);
 
             switch (direction) {
-            case 'Left':
+            case 'W':
                 entity.x -= this.map.tileWidth;
-                console.log(entity.key + " " + moveType + " left");
+                console.log(entity.key + " " + moveType + " west");
                 this.flankedEnemies(entity);
                 break;
-            case 'Right':
+            case 'E':
                 entity.x += this.map.tileWidth;
-                console.log(entity.key + " " + moveType + " right");
+                console.log(entity.key + " " + moveType + " east");
                 this.flankedEnemies(entity);
                 break;
-            case 'Up':
+            case 'N':
                 entity.y -= this.map.tileWidth;
-                console.log(entity.key + " " + moveType + " up");
+                console.log(entity.key + " " + moveType + " north");
                 this.flankedEnemies(entity);
                 break;
-            case 'Down':
+            case 'S':
                 entity.y += this.map.tileWidth;
-                console.log(entity.key + " " + moveType + " down");
+                console.log(entity.key + " " + moveType + " south");
+                this.flankedEnemies(entity);
+                break;
+            case 'NW':
+                entity.x -= this.map.tileWidth;
+                entity.y -= this.map.tileWidth;
+                console.log(entity.key + " " + moveType + " northwest");
+                this.flankedEnemies(entity);
+                break;
+            case 'SW':
+                entity.x -= this.map.tileWidth;
+                entity.y += this.map.tileWidth;
+                console.log(entity.key + " " + moveType + " southwest");
+                this.flankedEnemies(entity);
+                break;
+            case 'SE':
+                entity.x += this.map.tileWidth;
+                entity.y += this.map.tileWidth;
+                console.log(entity.key + " " + moveType + " southeast");
+                this.flankedEnemies(entity);
+                break;
+            case 'NE':
+                entity.x += this.map.tileWidth;
+                entity.y -= this.map.tileWidth;
+                console.log(entity.key + " " + moveType + " northeast");
                 this.flankedEnemies(entity);
                 break;
             }
