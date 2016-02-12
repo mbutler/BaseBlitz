@@ -211,7 +211,7 @@ BaseBlitz.Game.prototype = {
         return adjacentList;
     },
     
-    //finds all enemies adjacent to a player. 
+    //finds all enemies adjacent to a player 
     adjacentEnemies: function (player, reach) {
         //player = this.currentPlayer; //debug mode
         var adjacentList = [],
@@ -260,6 +260,7 @@ BaseBlitz.Game.prototype = {
         return entityType;
     },
     
+    //adds a player to a sorted initiative list
     initManager: function (player, roll) {
         var position = 0;
         //need two lists, the rolls, and the names
@@ -274,7 +275,7 @@ BaseBlitz.Game.prototype = {
         this.initOrder.splice(position, 0, player);
     },
     
-    //returns a point object of current location of any entity. x,y coordinates
+    //returns the point of a specific entity
     getPoint: function (entity) {
         var tx = this.game.math.snapToFloor(entity.x, this.map.tileWidth) / this.map.tileWidth,
             ty = this.game.math.snapToFloor(entity.y, this.map.tileWidth) / this.map.tileWidth,
@@ -282,16 +283,13 @@ BaseBlitz.Game.prototype = {
         return point;
     },
     
-    //current:Point, direction:Up,Down,Right,Left, squares:number
-    lookAhead: function (current, keycode, squares) {
-        var cx = current.x,
-            cy = current.y,
+    //returns a point a specific number of squares in a direction from a current point
+    lookAhead: function (start, direction, squares) {
+        var cx = start.x,
+            cy = start.y,
             tx = 0,
             ty = 0,
-            direction = '',
             point = {};
-        
-        direction = this.changeKeyCode(keycode);
         
         switch (direction) {
         case 'N':
@@ -370,20 +368,23 @@ BaseBlitz.Game.prototype = {
         });
     },
     
-    //finds out if the sqaure ahead of the moving player is blocked
+    //returns a boolean of whether the sqaure ahead of the moving player is blocked
     isBlocked: function (entity, direction) {
-        var playerPoint = {},
+        var playerPoint = this.getPoint(entity),
             barriers = [],
+            itemsList = this.items.children,
+            itemPoints = [],
+            itemPoint = {},
             lookPoint = {},
             k = 0,
+            i = 0,
+            north = this.lookAhead(playerPoint, 'N', 1),
+            east = this.lookAhead(playerPoint, 'E', 1),
+            south = this.lookAhead(playerPoint, 'S', 1),
+            west = this.lookAhead(playerPoint, 'W', 1),
             isBlocked;
-        
-        //get the point where the player is at, is looking to move, and all blocked adjacent points
-        playerPoint = this.getPoint(entity);
-        barriers = this.blockedSquares(entity);
-        lookPoint = this.lookAhead(playerPoint, direction, 1);
-        
-        //looks in an array for an object and returns true if it's there
+
+        //looks in an array of Points for a Point object and returns true if it's there
         function include(arr, obj) {
             var contains = false;
             for (k = 0; k < arr.length; k += 1) {
@@ -394,12 +395,47 @@ BaseBlitz.Game.prototype = {
             return contains;
         }
         
+        //get the list of items
+        for (i = 0; i < itemsList.length; i += 1) {
+            itemPoint = this.getPoint(itemsList[i]);
+            itemPoints.push(itemPoint);
+        }
+                
+        //get the point where the player is looking to move and all blocked adjacent points        
+        barriers = this.blockedSquares(entity);
+        lookPoint = this.lookAhead(playerPoint, direction, 1);
+        
+        //if bounding squares are present, add the diagonal square ahead to the barrier list
+        switch (direction) {
+        case 'NW':
+            if (include(itemPoints, north) || include(itemPoints, west)) {
+                barriers.push(lookPoint);
+            }
+            break;
+        case 'SW':
+            if (include(itemPoints, south) || include(itemPoints, west)) {
+                barriers.push(lookPoint);
+            }
+            break;
+        case 'SE':
+            if (include(itemPoints, south) || include(itemPoints, east)) {
+                barriers.push(lookPoint);
+            }
+            break;
+        case 'NE':
+            if (include(itemPoints, north) || include(itemPoints, east)) {
+                barriers.push(lookPoint);
+            }
+            break;
+        }
+        
         isBlocked = include(barriers, lookPoint);
         return isBlocked;
         
     },
     
-    changeKeyCode: function (key) {
+    //returns a standard direction (N,E,S,W,NE,NW,SE,SW) given various keycodes
+    changeKeyCode: function (keycode) {
         var direction = '';
         /*
         U+0038  8
@@ -416,58 +452,59 @@ BaseBlitz.Game.prototype = {
         U+004A  j
         U+004B  k
         U+004C  l
-        */        
-        if (key === 'U+0038' || key === 'Up') {
-            direction = "N";            
-        } else if (key === 'U+0037') {
-            direction = 'NW';            
-        } else if (key === 'U+0034' || key === 'Left' || key === 'U+0055') {
-            direction = 'W';            
-        } else if (key === 'U+0031' || key === 'U+004A') {
-            direction = 'SW';            
-        } else if (key === 'U+0032' || key === 'Down' || key === 'U+004B') {
-            direction = 'S';           
-        } else if (key === 'U+0033' || key === 'U+004C') {
-            direction = 'SE';            
-        } else if (key === 'U+0036' || key === 'Right' || key === 'U+004F') {
-            direction = 'E';            
-        } else if (key === 'U+0039') {
-            direction = 'NE';            
+        */
+        if (keycode === 'U+0038' || keycode === 'Up') {
+            direction = "N";
+        } else if (keycode === 'U+0037') {
+            direction = 'NW';
+        } else if (keycode === 'U+0034' || keycode === 'Left' || keycode === 'U+0055') {
+            direction = 'W';
+        } else if (keycode === 'U+0031' || keycode === 'U+004A') {
+            direction = 'SW';
+        } else if (keycode === 'U+0032' || keycode === 'Down' || keycode === 'U+004B') {
+            direction = 'S';
+        } else if (keycode === 'U+0033' || keycode === 'U+004C') {
+            direction = 'SE';
+        } else if (keycode === 'U+0036' || keycode === 'Right' || keycode === 'U+004F') {
+            direction = 'E';
+        } else if (keycode === 'U+0039') {
+            direction = 'NE';
         }
         
         return direction;
     },
     
-    //pass in 'player' string as type to use current player
-    move: function (context, type, keycode) {
+    //moves a sprite one square in a given direction while ignoring blocked squares
+    move: function (context, type, direction) {
         var entity = {},
             moveType = '',
-            direction = '',
-            adjacentList = [],
-            i = 0;
+            keycode = '',
+            adjacentList = [];
         
+        //use 'player' when adding the listener, otherwise the sprite object to move without input
         if (type === 'player') {
             //handle a player pressing a key
             entity = this.currentPlayer;
             
-            if (keycode === undefined) {
+            if (direction === undefined) {
                 keycode = context.event.keyIdentifier;
+                direction = this.changeKeyCode(keycode);
             }
         } else {
             entity = type;
         }
 
-        if (!this.isBlocked(entity, keycode)) {
+        if (!this.isBlocked(entity, direction)) {
             //player can avoid attack of opportunity by shifting through squares
             if (context.shiftKey === true) {
                 moveType = "shifts";
             } else {
                 moveType = "moves";
                 //all adjacent enemies get an attack of opportunity
-                this.opportunityAttack(entity);
+                if (type === 'player') {
+                    this.opportunityAttack(entity);
+                }
             }
-            
-            direction = this.changeKeyCode(keycode);
 
             switch (direction) {
             case 'W':
@@ -519,7 +556,8 @@ BaseBlitz.Game.prototype = {
     },
     
     opportunityAttack: function (defender) {
-        var adjacentList = this.adjacentEnemies(defender);
+        var adjacentList = this.adjacentEnemies(defender),
+            i = 0;
         for (i = 0; i < adjacentList.length; i += 1) {
             console.log(adjacentList[i].key + " gets an opportunity attack!");
         }
