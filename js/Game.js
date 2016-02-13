@@ -5,24 +5,124 @@ BaseBlitz.Game = function () {};
 BaseBlitz.Game.prototype = {
     
     init: function () {
+        
+        this.sheet = {
+            defenses: {
+                ac: 0,
+                fort: 0,
+                will: 0,
+                ref: 0
+            },
+            abilities: {
+                str: 0,
+                con: 0,
+                dex: 0,
+                int: 0,
+                wis: 0,
+                cha: 0
+            },
+            surges: 0,
+            surgevalue: 0,
+            actionpoints: 1,
+            initiative: 0,
+            insight: 0,
+            perception: 0,
+            speed: 6,
+            secondwind: 1,
+            reach: 1,
+            conditions: {
+                blinded: false,
+                dazed: false,
+                deafened: false,
+                dominated: false,
+                dying: false,
+                helpless: false,
+                immobilized: false,
+                marked: false,
+                petrified: false,
+                prone: false,
+                restrained: false,
+                slowed: false,
+                stunned: false,
+                surprised: false,
+                unconscioius: false,
+                weakened: false
+            },
+            slots: {
+                armor: '',
+                mainhand: '',
+                offhand: '',
+                leftring: '',
+                rightring: '',
+                arms: '',
+                head: '',
+                feet: '',
+                hands: '',
+                neck: '',
+                waist: '',
+                tattoo: '',
+                kifocus: ''
+            },
+            skills: {
+                acrobatics: 0,
+                arcana: 0,
+                athletics: 0,
+                bluff: 0,
+                diplomacy: 0,
+                dungeoneering: 0,
+                endurance: 0,
+                heal: 0,
+                history: 0,
+                insight: 0,
+                intimidate: 0,
+                nature: 0,
+                perception: 0,
+                religion: 0,
+                stealth: 0,
+                streetwise: 0,
+                thievery: 0
+            },
+            powers: {},
+            basicattacks: {
+                melee: '',
+                ranged: ''
+            },
+            resistences: {
+                acid: false,
+                cold: false,
+                fire: false,
+                force: false,
+                lightning: false,
+                necrotic: false,
+                poison: false,
+                psychic: false,
+                radiant: false,
+                thunder: false
+            },
+            vulnerabilities: {
+                acid: false,
+                cold: false,
+                fire: false,
+                force: false,
+                lightning: false,
+                necrotic: false,
+                poison: false,
+                psychic: false,
+                radiant: false,
+                thunder: false
+            },
+            equipment: {}
+        };
+        
         this.initOrder = [];
         this.initRolls = [];
         this.heroes = [];
         this.monsters = [];
         this.players = [];
-        this.stats1 = {ac: 22, fort: 13, will: 9, ref: 10, surges: 2, ap: 1, speed: 6, wind: 1, reach: 1, conditions: {}, skills: {}, powers: {}, inventory: {}};
-        this.stats2 = {ac: 21, fort: 14, will: 10, ref: 10, surges: 2, ap: 1, speed: 6, wind: 1, reach: 1, conditions: {}, skills: {}, powers: {}, inventory: {}};
-        this.stats3 = {ac: 20, fort: 15, will: 11, ref: 10, surges: 2, ap: 1, speed: 6, wind: 1, reach: 1, conditions: {}, skills: {}, powers: {}, inventory: {}};
-        this.stats4 = {ac: 19, fort: 16, will: 12, ref: 10, surges: 2, ap: 1, speed: 6, wind: 1, reach: 1, conditions: {}, skills: {}, powers: {}, inventory: {}};
-        this.stats5 = {ac: 18, fort: 15, will: 13, ref: 10, surges: 2, ap: 1, speed: 6, wind: 1, reach: 1, conditions: {}, skills: {}, powers: {}, inventory: {}};
-        this.stats6 = {ac: 17, fort: 13, will: 8, ref: 10, surges: 2, ap: 1, speed: 6, wind: 1, reach: 1, conditions: {}, skills: {}, powers: {}, inventory: {}};
-        this.stats7 = {ac: 16, fort: 12, will: 16, ref: 10, surges: 2, ap: 1, speed: 6, wind: 1, reach: 1, conditions: {}, skills: {}, powers: {}, inventory: {}};
-        this.stats8 = {ac: 14, fort: 11, will: 13, ref: 10, surges: 2, ap: 1, speed: 6, wind: 1, reach: 1, conditions: {}, skills: {}, powers: {}, inventory: {}};
-        
+    
     },
     
     create: function () {
-
         
         //create tilemap and set up layers
         this.map = this.game.add.tilemap('map1');
@@ -37,24 +137,24 @@ BaseBlitz.Game.prototype = {
     
         //heroes
         this.hero1 = this.game.add.sprite(75 * 1 + 3, 75 * 1 + 5, 'jingleboots');
-        this.hero1.stats = this.stats1;
+        this.hero1.sheet = this.extend(this.sheet, {});        
         this.hero2 = this.game.add.sprite(75 * 1 + 3, 75 * 3 + 5, 'rattlesocks');
-        this.hero2.stats = this.stats2;
+        this.hero2.sheet = this.extend(this.sheet, {});
         this.hero3 = this.game.add.sprite(75 * 2 + 3, 75 * 2  + 5, 'scoopercram');
-        this.hero3.stats = this.stats3;
+        this.hero3.sheet = this.extend(this.sheet, {});
         this.hero4 = this.game.add.sprite(75 * 3 + 3, 75 * 3 + 5, 'jumperstomp');
-        this.hero4.stats = this.stats4;
+        this.hero4.sheet = this.extend(this.sheet, {});
         this.heroes = [this.hero1, this.hero2, this.hero3, this.hero4];
         
         //monsters
         this.monster1 = this.game.add.sprite(75 * 6 + 3, 75 * 9 + 5, 'spider');
-        this.monster1.stats = this.stats5;
+        this.monster1.sheet = this.extend(this.sheet, {});
         this.monster2 = this.game.add.sprite(75 * 8 + 3, 75 * 8 + 5, 'golem');
-        this.monster2.stats = this.stats6;
+        this.monster2.sheet = this.extend(this.sheet, {});
         this.monster3 = this.game.add.sprite(75 * 9 + 3, 75 * 9 + 5, 'fungus');
-        this.monster3.stats = this.stats7;
+        this.monster3.sheet = this.extend(this.sheet, {});
         this.monster4 = this.game.add.sprite(75 * 6 + 3, 75 * 7 + 5, 'blindheim');
-        this.monster4.stats = this.stats8;
+        this.monster4.sheet = this.extend(this.sheet, {});
         this.monsters = [this.monster1, this.monster2, this.monster3, this.monster4];
         
         //reduce heroes and monsters into list of all players
@@ -130,20 +230,25 @@ BaseBlitz.Game.prototype = {
     },
     
     debug: function () {
-
-        var barriers = this.blockedSquares(this.currentPlayer);
-        console.log(barriers);
+        this.attack("jingleboots", "golem", "longsword");
 
     },
     
-    attack: function (a, b, c, d) {
-        console.log(a);
-        console.log(b);
-        console.log(c);
-        console.log(d);
-        //console.log(e);
+    //creates a new object from a prototype literal, taking an object as override values
+    extend: function (proto, literal) {
+        var result = Object.create(proto);
+        Object.keys(literal).forEach(function(key) {
+            result[key] = literal[key];
+        });
+        return result;
     },
     
+    //processes an attack
+    attack: function (attacker, defender, power) {
+        console.log(attacker + " attacks " + defender + " with " + power);
+    },
+    
+    //returns an array of all enemies the player is flanking
     flankedEnemies: function (player) {
         //player = this.currentPlayer; //debug mode
         var flankedList = [],
@@ -151,7 +256,7 @@ BaseBlitz.Game.prototype = {
             flankPoint = {},
             allyPoint = {},
             playerPoint = this.getPoint(player),
-            adjacentList = this.adjacentEnemies(player, player.stats.reach),
+            adjacentList = this.adjacentEnemies(player, player.sheet.reach),
             i = 0,
             j = 0,
             k = 0,
@@ -283,7 +388,7 @@ BaseBlitz.Game.prototype = {
         return point;
     },
     
-    //returns a point a specific number of squares in a direction from a current point
+    //returns a point a specific number of squares in a direction from a starting point
     lookAhead: function (start, direction, squares) {
         var cx = start.x,
             cy = start.y,
@@ -384,7 +489,7 @@ BaseBlitz.Game.prototype = {
             west = this.lookAhead(playerPoint, 'W', 1),
             isBlocked;
 
-        //looks in an array of Points for a Point object and returns true if it's there
+        //looks in an array of points for a point object and returns true if it's there
         function include(arr, obj) {
             var contains = false;
             for (k = 0; k < arr.length; k += 1) {
@@ -555,6 +660,7 @@ BaseBlitz.Game.prototype = {
         }
     },
     
+    //logs all of the players adjacent enemies who get opportunity attacks on player move
     opportunityAttack: function (defender) {
         var adjacentList = this.adjacentEnemies(defender),
             i = 0;
@@ -563,6 +669,7 @@ BaseBlitz.Game.prototype = {
         }
     },
         
+    //switches current player to next in initiative order
     switchPlayer: function () {
         var position = this.initOrder.indexOf(this.currentPlayer),
             nextPosition = 0,
