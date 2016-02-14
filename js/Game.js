@@ -111,7 +111,11 @@ BaseBlitz.Game.prototype = {
                 radiant: false,
                 thunder: false
             },
-            equipment: {}
+            equipment: {},
+            metadata: {
+                movement: 0,
+                actions: [[1,1,1],[1,0,2],[0,2,1],[0,1,2],[0,0,3]]
+            }
         };
         
         this.initOrder = [];
@@ -134,6 +138,17 @@ BaseBlitz.Game.prototype = {
         this.map.addTilesetImage('statue', 'statue');
         this.createItems('statue', 'objectsLayer');
         //this.trapdoor = this.game.add.sprite(75 * 4, 75 * 5, 'trapdoor');
+        
+        this.newTurn = new Phaser.Signal();
+        this.newTurn.add(this.turnStart, this, 0);
+        
+        this.newRound = new Phaser.Signal();
+        this.newRound.add(this.roundStart, this, 0);
+        
+        this.newAction = new Phaser.Signal();
+        this.newAction.add(this.actionPhase, this, 0);
+        
+        this.round = 0;
     
         //heroes
         this.hero1 = this.game.add.sprite(75 * 1 + 3, 75 * 1 + 5, 'jingleboots');
@@ -176,13 +191,18 @@ BaseBlitz.Game.prototype = {
         this.initManager(this.monster4, 15); //blindheim
         
         this.currentPlayer = this.initOrder[0];
-        this.currentPlayer.lastMove = '';
         this.game.world.bringToTop(this.currentPlayer);
+        this.newRound.dispatch();
+        this.newTurn.dispatch();
         ////////////////////////////////////////////////////////////////
         
         //direction controller//       
         this.keyD = this.game.input.keyboard.addKey(Phaser.KeyCode.D); // debug mode
         this.keyE = this.game.input.keyboard.addKey(Phaser.KeyCode.E);
+        this.keyS = this.game.input.keyboard.addKey(Phaser.KeyCode.S);
+        this.keyM = this.game.input.keyboard.addKey(Phaser.KeyCode.M);
+        this.keyV = this.game.input.keyboard.addKey(Phaser.KeyCode.V);
+        
         this.keyLeft = this.game.input.keyboard.addKey(Phaser.KeyCode.LEFT);
         this.keyRight = this.game.input.keyboard.addKey(Phaser.KeyCode.RIGHT);
         this.keyUp = this.game.input.keyboard.addKey(Phaser.KeyCode.UP);
@@ -205,33 +225,155 @@ BaseBlitz.Game.prototype = {
         this.keyL = this.game.input.keyboard.addKey(Phaser.KeyCode.L);
               
         this.keyD.onDown.add(this.debug, this);
-        this.keyE.onDown.add(this.switchPlayer, this);
+        this.keyE.onDown.add(this.turnEnd, this);
+        this.keyS.onDown.add(this.standardAction, this);
+        this.keyM.onDown.add(this.minorAction, this);
+        this.keyV.onDown.add(this.moveAction, this);
         //args: (callback, context, priority, entity('player' for this.currentPlayer or object), direction)  
-        this.keyLeft.onDown.add(this.move, this, 0, 'player');
-        this.keyRight.onDown.add(this.move, this, 0, 'player');
-        this.keyUp.onDown.add(this.move, this, 0, 'player');
-        this.keyDown.onDown.add(this.move, this, 0, 'player');
         
-        this.keyEight.onDown.add(this.move, this, 0, 'player');
-        this.keySeven.onDown.add(this.move, this, 0, 'player');
-        this.keyFour.onDown.add(this.move, this, 0, 'player');
-        this.keyOne.onDown.add(this.move, this, 0, 'player');
-        this.keyTwo.onDown.add(this.move, this, 0, 'player');
-        this.keyThree.onDown.add(this.move, this, 0, 'player');
-        this.keySix.onDown.add(this.move, this, 0, 'player');
-        this.keyNine.onDown.add(this.move, this, 0, 'player');
-        this.keyFive.onDown.add(this.move, this, 0, 'player');
-        
-        this.keyU.onDown.add(this.move, this, 0, 'player');
-        this.keyO.onDown.add(this.move, this, 0, 'player');
-        this.keyJ.onDown.add(this.move, this, 0, 'player');
-        this.keyK.onDown.add(this.move, this, 0, 'player');
-        this.keyL.onDown.add(this.move, this, 0, 'player');
     },
     
     debug: function () {
-        this.attack("jingleboots", "golem", "longsword");
+        console.log(this.currentPlayer.sheet.metadata.actions);
 
+    },
+    
+    turnStart: function () {
+        this.currentPlayer.sheet.metadata.actions = [[1,1,1],[1,0,2],[0,2,1],[0,1,2],[0,0,3]];
+        this.currentPlayer.sheet.metadata.movement = this.currentPlayer.sheet.speed;
+        console.log("It is now " + this.currentPlayer.key + "'s turn!");
+        console.log("Other creatures's special abilities that begin on " + this.currentPlayer.key + "'s turn.");
+        console.log(this.currentPlayer.key + " takes any ongoing damage.");
+        console.log(this.currentPlayer.key + " may use any regeneration.");
+        console.log("Some effects end now.");
+        console.log("++++++++++++");  
+        this.newAction.dispatch();
+    },
+    
+    turnEnd: function () {
+            this.keyLeft.onDown.remove(this.move, this, 0, 'player');
+            this.keyRight.onDown.remove(this.move, this, 0, 'player');
+            this.keyUp.onDown.remove(this.move, this, 0, 'player');
+            this.keyDown.onDown.remove(this.move, this, 0, 'player');
+
+            this.keyEight.onDown.remove(this.move, this, 0, 'player');
+            this.keySeven.onDown.remove(this.move, this, 0, 'player');
+            this.keyFour.onDown.remove(this.move, this, 0, 'player');
+            this.keyOne.onDown.remove(this.move, this, 0, 'player');
+            this.keyTwo.onDown.remove(this.move, this, 0, 'player');
+            this.keyThree.onDown.remove(this.move, this, 0, 'player');
+            this.keySix.onDown.remove(this.move, this, 0, 'player');
+            this.keyNine.onDown.remove(this.move, this, 0, 'player');
+            this.keyFive.onDown.remove(this.move, this, 0, 'player');
+
+            this.keyU.onDown.remove(this.move, this, 0, 'player');
+            this.keyO.onDown.remove(this.move, this, 0, 'player');
+            this.keyJ.onDown.remove(this.move, this, 0, 'player');
+            this.keyK.onDown.remove(this.move, this, 0, 'player');
+            this.keyL.onDown.remove(this.move, this, 0, 'player');
+        
+            console.log(this.currentPlayer.key + " can make a saving throw");
+            this.switchPlayer();
+    },
+    
+    roundStart: function () {
+        var lastRound = 0;
+        this.round += 1;
+        if (this.round !== 1) {
+            lastRound = this.round - 1;
+            console.log("End of round " + lastRound + " effects.");
+        }
+        
+        console.log("It is now Round " + this.round);
+    },
+    
+    actionPhase: function () {
+        console.log("standard, minor, move for " +this.currentPlayer.key);
+    },
+    
+    standardAction: function () {        
+        if (this.useAction(this.currentPlayer, "standard") === true) {
+            console.log(this.currentPlayer.key + " using a standard action");
+        } else {
+            console.log("Choose another action");
+        }
+    },
+    
+    minorAction: function () {
+        if (this.useAction(this.currentPlayer, "minor") === true) {
+            console.log(this.currentPlayer.key + " using a minor action");
+        } else {
+            console.log("Choose another action");
+        }
+    },
+    
+    moveAction: function () {
+        if (this.useAction(this.currentPlayer, "move") === true) {
+            console.log(this.currentPlayer.key + " using a move action");
+            this.currentPlayer.sheet.metadata.movement = this.currentPlayer.sheet.speed;
+            this.keyLeft.onDown.add(this.move, this, 0, 'player');
+            this.keyRight.onDown.add(this.move, this, 0, 'player');
+            this.keyUp.onDown.add(this.move, this, 0, 'player');
+            this.keyDown.onDown.add(this.move, this, 0, 'player');
+
+            this.keyEight.onDown.add(this.move, this, 0, 'player');
+            this.keySeven.onDown.add(this.move, this, 0, 'player');
+            this.keyFour.onDown.add(this.move, this, 0, 'player');
+            this.keyOne.onDown.add(this.move, this, 0, 'player');
+            this.keyTwo.onDown.add(this.move, this, 0, 'player');
+            this.keyThree.onDown.add(this.move, this, 0, 'player');
+            this.keySix.onDown.add(this.move, this, 0, 'player');
+            this.keyNine.onDown.add(this.move, this, 0, 'player');
+            this.keyFive.onDown.add(this.move, this, 0, 'player');
+
+            this.keyU.onDown.add(this.move, this, 0, 'player');
+            this.keyO.onDown.add(this.move, this, 0, 'player');
+            this.keyJ.onDown.add(this.move, this, 0, 'player');
+            this.keyK.onDown.add(this.move, this, 0, 'player');
+            this.keyL.onDown.add(this.move, this, 0, 'player');
+        } else {
+            console.log("Choose another action");
+        }
+        //this.move();
+    },
+    
+    useAction: function (player, action) {
+        
+        var actions = player.sheet.metadata.actions,
+            nextset = [],
+            i = 0,  //action set loop
+            j = 0,  //action type loop
+            s = 0,  //standard action index
+            x = 1,  //move action index
+            m = 2,  //minor action index
+            c = '';
+        
+        if (action === 'move') {
+            c = x;
+        } else if (action === 'standard') {
+            c = s;
+        } else {
+            c = m;
+        }
+        
+        for (i = 0; i < actions.length; i++) {
+            for (j = 0; j < actions[i].length; j++) {
+                if (actions[i][c] > 0) { 
+                    actions[i][c] -= 1;
+                    nextset.push(actions[i]);
+                    this.currentPlayer.sheet.metadata.actions = nextset;
+                    break;
+                } else {
+                    break;
+                }
+            }
+        }        
+                
+        if (nextset.length > 0) {
+                return true;
+        } else {
+                return false;
+        }
     },
     
     //creates a new object from a prototype literal, taking an object as override values
@@ -580,7 +722,7 @@ BaseBlitz.Game.prototype = {
     },
     
     //moves a sprite one square in a given direction while ignoring blocked squares
-    move: function (context, type, direction) {
+    move: function (context, type, direction) {        
         var entity = {},
             moveType = '',
             keycode = '',
@@ -589,8 +731,7 @@ BaseBlitz.Game.prototype = {
         //use 'player' when adding the listener, otherwise the sprite object to move without input
         if (type === 'player') {
             //handle a player pressing a key
-            entity = this.currentPlayer;
-            
+            entity = this.currentPlayer;            
             if (direction === undefined) {
                 keycode = context.event.keyIdentifier;
                 direction = this.changeKeyCode(keycode);
@@ -599,7 +740,7 @@ BaseBlitz.Game.prototype = {
             entity = type;
         }
 
-        if (!this.isBlocked(entity, direction)) {
+        if (!this.isBlocked(entity, direction) && entity.sheet.metadata.movement > 0) {
             //player can avoid attack of opportunity by shifting through squares
             if (context.shiftKey === true) {
                 moveType = "shifts";
@@ -607,10 +748,11 @@ BaseBlitz.Game.prototype = {
                 moveType = "moves";
                 //all adjacent enemies get an attack of opportunity
                 if (type === 'player') {
+                    entity.sheet.metadata.movement -= 1;
                     this.opportunityAttack(entity);
                 }
             }
-
+            
             switch (direction) {
             case 'W':
                 entity.x -= this.map.tileWidth;
@@ -678,14 +820,15 @@ BaseBlitz.Game.prototype = {
         //loop around initiative
         if (position === this.initOrder.length - 1) {
             nextPosition = 0;
+            this.newRound.dispatch();
         } else {
             nextPosition = position + 1;
         }
         
         nextPlayer = this.initOrder[nextPosition];
         this.currentPlayer = nextPlayer;
-        this.game.world.bringToTop(this.currentPlayer);
-        console.log("It is now " + this.currentPlayer.key + "'s turn.");
+        this.game.world.bringToTop(this.currentPlayer);        
+        this.newTurn.dispatch();
     },
     
     update: function () {
