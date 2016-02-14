@@ -145,14 +145,11 @@ BaseBlitz.Game.prototype = {
         this.newRound = new Phaser.Signal();
         this.newRound.add(this.roundStart, this, 0);
         
-        this.newAction = new Phaser.Signal();
-        this.newAction.add(this.actionPhase, this, 0);
-        
         this.round = 0;
     
         //heroes
         this.hero1 = this.game.add.sprite(75 * 1 + 3, 75 * 1 + 5, 'jingleboots');
-        this.hero1.sheet = this.extend(this.sheet, {});        
+        this.hero1.sheet = this.extend(this.sheet, {});
         this.hero2 = this.game.add.sprite(75 * 1 + 3, 75 * 3 + 5, 'rattlesocks');
         this.hero2.sheet = this.extend(this.sheet, {});
         this.hero3 = this.game.add.sprite(75 * 2 + 3, 75 * 2  + 5, 'scoopercram');
@@ -223,33 +220,32 @@ BaseBlitz.Game.prototype = {
         this.keyJ = this.game.input.keyboard.addKey(Phaser.KeyCode.J);
         this.keyK = this.game.input.keyboard.addKey(Phaser.KeyCode.K);
         this.keyL = this.game.input.keyboard.addKey(Phaser.KeyCode.L);
-              
+                  
         this.keyD.onDown.add(this.debug, this);
         this.keyE.onDown.add(this.turnEnd, this);
         this.keyS.onDown.add(this.standardAction, this);
         this.keyM.onDown.add(this.minorAction, this);
         this.keyV.onDown.add(this.moveAction, this);
+        
         //args: (callback, context, priority, entity('player' for this.currentPlayer or object), direction)  
         
     },
     
+    //varous testing things
     debug: function () {
         console.log(this.currentPlayer.sheet.metadata.actions);
-
     },
     
+    //handles the start of a turn
     turnStart: function () {
         this.currentPlayer.sheet.metadata.actions = [[1,1,1],[1,0,2],[0,2,1],[0,1,2],[0,0,3]];
         this.currentPlayer.sheet.metadata.movement = this.currentPlayer.sheet.speed;
         console.log("It is now " + this.currentPlayer.key + "'s turn!");
-        console.log("Other creatures's special abilities that begin on " + this.currentPlayer.key + "'s turn.");
-        console.log(this.currentPlayer.key + " takes any ongoing damage.");
-        console.log(this.currentPlayer.key + " may use any regeneration.");
-        console.log("Some effects end now.");
-        console.log("++++++++++++");  
-        this.newAction.dispatch();
+        console.log("special abilities, ongoing damage, regeneration, some effects end");
+        console.log("++++++++++++");        
     },
     
+    //handles end of turn and disabling movement controls
     turnEnd: function () {
             this.keyLeft.onDown.remove(this.move, this, 0, 'player');
             this.keyRight.onDown.remove(this.move, this, 0, 'player');
@@ -272,10 +268,15 @@ BaseBlitz.Game.prototype = {
             this.keyK.onDown.remove(this.move, this, 0, 'player');
             this.keyL.onDown.remove(this.move, this, 0, 'player');
         
+            this.keyS.onDown.add(this.standardAction, this);
+            this.keyM.onDown.add(this.minorAction, this);
+            this.keyV.onDown.add(this.moveAction, this);
+        
             console.log(this.currentPlayer.key + " can make a saving throw");
             this.switchPlayer();
     },
     
+    //handles start of round
     roundStart: function () {
         var lastRound = 0;
         this.round += 1;
@@ -287,10 +288,7 @@ BaseBlitz.Game.prototype = {
         console.log("It is now Round " + this.round);
     },
     
-    actionPhase: function () {
-        console.log("standard, minor, move for " +this.currentPlayer.key);
-    },
-    
+    //handles taking standard action
     standardAction: function () {        
         if (this.useAction(this.currentPlayer, "standard") === true) {
             console.log(this.currentPlayer.key + " using a standard action");
@@ -299,6 +297,7 @@ BaseBlitz.Game.prototype = {
         }
     },
     
+    //handles taking minor action
     minorAction: function () {
         if (this.useAction(this.currentPlayer, "minor") === true) {
             console.log(this.currentPlayer.key + " using a minor action");
@@ -307,6 +306,7 @@ BaseBlitz.Game.prototype = {
         }
     },
     
+    //handles move action and turning on movement keys
     moveAction: function () {
         if (this.useAction(this.currentPlayer, "move") === true) {
             console.log(this.currentPlayer.key + " using a move action");
@@ -335,8 +335,9 @@ BaseBlitz.Game.prototype = {
             console.log("Choose another action");
         }
         //this.move();
-    },
-    
+    },    
+
+    //uses a player's standard, move, or minor action slot if available
     useAction: function (player, action) {
         
         var actions = player.sheet.metadata.actions,
@@ -356,12 +357,16 @@ BaseBlitz.Game.prototype = {
             c = m;
         }
         
+        //loops through an encoded array based on p.198 options of compendium
+        //[[1,1,1],[1,0,2],[0,2,1],[0,1,2],[0,0,3]]
+        //if action is >0, take it and subtract 1 until they are gone
+        //store in player's metadata
         for (i = 0; i < actions.length; i++) {
             for (j = 0; j < actions[i].length; j++) {
                 if (actions[i][c] > 0) { 
                     actions[i][c] -= 1;
                     nextset.push(actions[i]);
-                    this.currentPlayer.sheet.metadata.actions = nextset;
+                    player.sheet.metadata.actions = nextset;
                     break;
                 } else {
                     break;
@@ -436,7 +441,7 @@ BaseBlitz.Game.prototype = {
     //returns an array of all blocked squares adjacent to the player
     blockedSquares: function (player) {
         var adjacentList = [],
-            items = this.items.children,
+            items = this.blocks.children,
             enemies = this.adjacentEnemies(player),
             barriers = [],
             playerPoint = this.getPoint(player),
@@ -586,11 +591,11 @@ BaseBlitz.Game.prototype = {
     //creates a group of sprites from the map
     createItems: function (kind, layer) {
         var result = [];
-        this.items = this.game.add.group();
-        this.items.enableBody = true;
+        this.blocks = this.game.add.group();
+        this.blocks.enableBody = true;
         result = this.findObjectsByType(kind, this.map, layer);
         result.forEach(function (element) {
-            this.createFromTiledObject(element, this.items);
+            this.createFromTiledObject(element, this.blocks);
         },  this);
     },
     
@@ -619,7 +624,7 @@ BaseBlitz.Game.prototype = {
     isBlocked: function (entity, direction) {
         var playerPoint = this.getPoint(entity),
             barriers = [],
-            itemsList = this.items.children,
+            itemsList = this.blocks.children,
             itemPoints = [],
             itemPoint = {},
             lookPoint = {},
