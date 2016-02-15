@@ -148,24 +148,24 @@ BaseBlitz.Game.prototype = {
         this.round = 0;
     
         //heroes
-        this.hero1 = this.game.add.sprite(75 * 1 + 3, 75 * 1 + 5, 'jingleboots');
+        this.hero1 = this.game.add.sprite(75 * 1, 75 * 1, 'jingleboots');
         this.hero1.sheet = this.extend(this.sheet, {});
-        this.hero2 = this.game.add.sprite(75 * 1 + 3, 75 * 3 + 5, 'rattlesocks');
+        this.hero2 = this.game.add.sprite(75 * 1, 75 * 3, 'rattlesocks');
         this.hero2.sheet = this.extend(this.sheet, {});
-        this.hero3 = this.game.add.sprite(75 * 2 + 3, 75 * 2  + 5, 'scoopercram');
+        this.hero3 = this.game.add.sprite(75 * 2, 75 * 2, 'scoopercram');
         this.hero3.sheet = this.extend(this.sheet, {});
-        this.hero4 = this.game.add.sprite(75 * 3 + 3, 75 * 3 + 5, 'jumperstomp');
+        this.hero4 = this.game.add.sprite(75 * 3, 75 * 3, 'jumperstomp');
         this.hero4.sheet = this.extend(this.sheet, {});
         this.heroes = [this.hero1, this.hero2, this.hero3, this.hero4];
         
         //monsters
-        this.monster1 = this.game.add.sprite(75 * 6 + 3, 75 * 9 + 5, 'spider');
+        this.monster1 = this.game.add.sprite(75 * 6, 75 * 9, 'spider');
         this.monster1.sheet = this.extend(this.sheet, {});
-        this.monster2 = this.game.add.sprite(75 * 8 + 3, 75 * 8 + 5, 'golem');
+        this.monster2 = this.game.add.sprite(75 * 8, 75 * 8, 'golem');
         this.monster2.sheet = this.extend(this.sheet, {});
-        this.monster3 = this.game.add.sprite(75 * 9 + 3, 75 * 9 + 5, 'fungus');
+        this.monster3 = this.game.add.sprite(75 * 9, 75 * 9, 'fungus');
         this.monster3.sheet = this.extend(this.sheet, {});
-        this.monster4 = this.game.add.sprite(75 * 6 + 3, 75 * 7 + 5, 'blindheim');
+        this.monster4 = this.game.add.sprite(75 * 6, 75 * 7, 'blindheim');
         this.monster4.sheet = this.extend(this.sheet, {});
         this.monsters = [this.monster1, this.monster2, this.monster3, this.monster4];
         
@@ -225,15 +225,225 @@ BaseBlitz.Game.prototype = {
         this.keyE.onDown.add(this.turnEnd, this);
         this.keyS.onDown.add(this.standardAction, this);
         this.keyM.onDown.add(this.minorAction, this);
-        this.keyV.onDown.add(this.moveAction, this);
-        
-        //args: (callback, context, priority, entity('player' for this.currentPlayer or object), direction)  
-        
+        this.keyV.onDown.add(this.moveAction, this);       
+            
     },
     
     //varous testing things
     debug: function () {
-        console.log(this.currentPlayer.sheet.metadata.actions);
+
+        var cover = this.coverBonus(this.currentPlayer, this.monster4);
+        console.log("-" + cover + " penalty to attack roll");
+
+    },
+    
+    //returns the attack modifier based on calculated cover
+    coverBonus: function (attacker, defender) {
+        var playerPoint = this.getPoint(attacker),
+            enemyPoint = this.getPoint(defender),
+            corner = [],
+            total = [],
+            bestshots = [],
+            countedBlocks = [],
+            cornerList = [],
+            blocked = 0,
+            blocksOnBestCorner = 0,
+            lineOfSight = false,
+            edgeCase = false,
+            i = 0,
+            j = 0,
+            k = 0,
+            m = 0;
+        
+        //calculate 16 lines: from every corner to every corner
+        for (j = 1; j <= 4; j += 1) {
+            for (i = 1; i <= 4; i += 1) {
+                blocked = this.coverLine(attacker, defender, j, i);
+                corner.push(blocked)
+            }
+        }
+        
+        //turn edgeCase on if able to shoot through walls due to 1px gaps between squares
+        if (playerPoint.x === enemyPoint.x || playerPoint.y === enemyPoint.y) {
+            //edgeCase = true;
+            //console.log("literally an edge case");
+        }
+        
+        //must be at least one 0 for line of sight
+        if (_.indexOf(corner, 0) === -1) {
+            return "blocked";
+        }
+        
+        //group the array back into chunks representing the four corners
+        total = _.chunk(corner, 4);
+                
+        //remove every corner with all lines blocked (no zeroes)
+        for (i = 0; i < total.length; i += 1) {
+            if (_.includes(total[i], 0) === true) {
+                bestshots.push(total[i]);
+            }
+        }        
+        
+        //find the best corner (most unblocked lines)
+        for (k = 0; k < bestshots.length; k += 1) { 
+            var counts = {};
+            bestshots[k].forEach(function(x) { counts[x] = (counts[x] || 0)+1; });
+            countedBlocks.push(counts);
+        }        
+        
+        //count number of open lines per corner
+        for (var m = 0; m < countedBlocks.length; m += 1) {
+            cornerList.push(countedBlocks[m]["0"]);
+        }
+        
+        function sortNumber(a,b) {
+            return b - a;
+        }
+        
+        //sort from most open lines per corner to least
+        cornerList.sort(sortNumber);
+        
+        //find number of blocked lines on the best possible corner
+        blocksOnBestCorner = 4 - cornerList[0];
+        
+        //find attack modifier based on number of blocked lines
+        switch (blocksOnBestCorner) {
+            case 0:
+                //no cover
+                return 0;
+                break;
+            case 1:
+                if (edgeCase === true) {
+                    return "blocked";
+                } else {
+                    //partial cover
+                    return 2; 
+                }                
+                break;
+            case 2:
+                if (edgeCase === true) {
+                    return "blocked";
+                } else {
+                    //patial cover
+                    return 2;  
+                }                
+                break;                
+            case 3:
+                //superior cover
+                return 5; 
+                break;
+            case 4:
+                //superior cover
+                return 5;
+                break;
+            default:
+                return "blocked";
+                break;
+        }
+        
+    },
+    
+    //returns the number of barriers between an attacker corner and a defender corner
+    coverLine: function (attacker, defender, attackCorner, defendCorner) {
+        var attackPoint = this.getPoint(attacker),
+            defendPoint = this.getPoint(defender),
+            barrierPoints = this.blockedPoints(attacker),
+            line = {},
+            tiles = [],
+            tileX = 0,
+            tileY = 0,
+            blockPoint = {},
+            intersect = [],
+            enemyPointList = [],
+            tilePoints = [],
+            j = 0,
+            ax = 0,
+            ay = 0,
+            dx = 0,
+            dy = 0;
+        
+        // algebraic quadrant numbers
+        switch (attackCorner) {
+            case 1:
+                ax = 74;
+                ay = 0;
+                break;
+            case 2:
+                ax = 0;
+                ay = 0;
+                break;
+            case 3:
+                ax = 0;
+                ay = 74;
+                break;
+            case 4:
+                ax = 74;
+                ay = 74;
+                break;
+        }
+            
+        switch (defendCorner) {
+            case 1:
+                dx = 74;
+                dy = 0;
+                break;
+            case 2:
+                dx = 0;
+                dy = 0;
+                break;
+            case 3:
+                dx = 0;
+                dy = 74;
+                break;
+            case 4:
+                dx = 74;
+                dy = 74;
+                break;
+        }
+        
+        line = new Phaser.Line(attacker.x + ax, attacker.y + ay, defender.x + dx, defender.y + dy);
+        tiles = this.backgroundlayer.getRayCastTiles(line);
+        
+        for (j = 0; j < tiles.length; j += 1) {
+            tileX = tiles[j].x;
+            tileY = tiles[j].y;            
+            blockPoint = new Phaser.Point(tileX, tileY);
+            tilePoints.push(blockPoint);
+        }
+        
+        enemyPointList.push(defendPoint);
+        intersect = _.intersectionWith(barrierPoints, tilePoints, _.isEqual);
+        intersect = _.differenceWith(intersect, enemyPointList, _.isEqual);
+        
+        return intersect.length;
+            
+    },
+    
+    //returns an array of points of all blocked squares on map for given player
+    blockedPoints: function (player) {
+        var blocks = this.blocks.children,
+            enemies = [],
+            tilePoints = [],
+            blockPoint = {},
+            i = 0;
+        
+        if (this.entityType(player) === "hero") {
+            enemies = this.monsters;
+        } else {
+            enemies = this.heroes;
+        }
+        
+        //get a list of all possible barriers. merge items and enemies
+        barriers = [blocks, enemies].reduce(function (a, b) {
+            return a.concat(b);
+        });
+        
+        for (i = 0; i < barriers.length; i += 1) {
+            blockPoint = this.getPoint(barriers[i]);
+            tilePoints.push(blockPoint);
+        }
+        
+        return tilePoints;
     },
     
     //handles the start of a turn
@@ -839,7 +1049,8 @@ BaseBlitz.Game.prototype = {
     update: function () {
 
         this.game.camera.follow(this.currentPlayer);
+        //this.line1.fromSprite(this.currentPlayer-75, this.monster1, false);
 
-    }
+    },
     
 };
