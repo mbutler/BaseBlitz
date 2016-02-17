@@ -5,125 +5,10 @@ BaseBlitz.Game = function () {};
 BaseBlitz.Game.prototype = {
     
     init: function () {
-        
-        this.sheet = {
-            defenses: {
-                ac: 0,
-                fort: 0,
-                will: 0,
-                ref: 0
-            },
-            abilities: {
-                str: 0,
-                con: 0,
-                dex: 0,
-                int: 0,
-                wis: 0,
-                cha: 0
-            },
-            surges: 0,
-            surgevalue: 0,
-            actionpoints: 1,
-            initiative: 0,
-            insight: 0,
-            perception: 0,
-            speed: 6,
-            secondwind: 1,
-            reach: 1,
-            conditions: {
-                blinded: false,
-                dazed: false,
-                deafened: false,
-                dominated: false,
-                dying: false,
-                helpless: false,
-                immobilized: false,
-                marked: false,
-                petrified: false,
-                prone: false,
-                restrained: false,
-                slowed: false,
-                stunned: false,
-                surprised: false,
-                unconscioius: false,
-                weakened: false
-            },
-            slots: {
-                armor: '',
-                mainhand: '',
-                offhand: '',
-                leftring: '',
-                rightring: '',
-                arms: '',
-                head: '',
-                feet: '',
-                hands: '',
-                neck: '',
-                waist: '',
-                tattoo: '',
-                kifocus: ''
-            },
-            skills: {
-                acrobatics: 0,
-                arcana: 0,
-                athletics: 0,
-                bluff: 0,
-                diplomacy: 0,
-                dungeoneering: 0,
-                endurance: 0,
-                heal: 0,
-                history: 0,
-                insight: 0,
-                intimidate: 0,
-                nature: 0,
-                perception: 0,
-                religion: 0,
-                stealth: 0,
-                streetwise: 0,
-                thievery: 0
-            },
-            powers: {},
-            basicattacks: {
-                melee: '',
-                ranged: ''
-            },
-            resistences: {
-                acid: false,
-                cold: false,
-                fire: false,
-                force: false,
-                lightning: false,
-                necrotic: false,
-                poison: false,
-                psychic: false,
-                radiant: false,
-                thunder: false
-            },
-            vulnerabilities: {
-                acid: false,
-                cold: false,
-                fire: false,
-                force: false,
-                lightning: false,
-                necrotic: false,
-                poison: false,
-                psychic: false,
-                radiant: false,
-                thunder: false
-            },
-            equipment: {},
-            metadata: {
-                movement: 0,
-                actions: [[1,1,1],[1,0,2],[0,2,1],[0,1,2],[0,0,3]]
-            }
-        };
-        
-        this.initOrder = [];
-        this.initRolls = [];
-        this.heroes = [];
-        this.monsters = [];
-        this.players = [];
-    
+            this.initOrder = [];
+            this.initRolls = [];
+            this.heroes = [];
+            this.monsters = [];
     },
     
     create: function () {
@@ -149,30 +34,23 @@ BaseBlitz.Game.prototype = {
     
         //heroes
         this.hero1 = this.game.add.sprite(75 * 1, 75 * 1, 'jingleboots');
-        this.hero1.sheet = this.extend(this.sheet, {});
+        this.hero1.sheet = _.cloneDeep(pregen1);
+        this.hero1.sheet.slots.mainhand = weapons.greatsword;
         this.hero2 = this.game.add.sprite(75 * 1, 75 * 3, 'rattlesocks');
-        this.hero2.sheet = this.extend(this.sheet, {});
         this.hero3 = this.game.add.sprite(75 * 2, 75 * 2, 'scoopercram');
-        this.hero3.sheet = this.extend(this.sheet, {});
         this.hero4 = this.game.add.sprite(75 * 3, 75 * 3, 'jumperstomp');
-        this.hero4.sheet = this.extend(this.sheet, {});
         this.heroes = [this.hero1, this.hero2, this.hero3, this.hero4];
         
         //monsters
         this.monster1 = this.game.add.sprite(75 * 6, 75 * 9, 'spider');
-        this.monster1.sheet = this.extend(this.sheet, {});
         this.monster2 = this.game.add.sprite(75 * 8, 75 * 8, 'golem');
-        this.monster2.sheet = this.extend(this.sheet, {});
+        this.monster2.sheet = _.cloneDeep(pregen2);
         this.monster3 = this.game.add.sprite(75 * 9, 75 * 9, 'fungus');
-        this.monster3.sheet = this.extend(this.sheet, {});
         this.monster4 = this.game.add.sprite(75 * 6, 75 * 7, 'blindheim');
-        this.monster4.sheet = this.extend(this.sheet, {});
         this.monsters = [this.monster1, this.monster2, this.monster3, this.monster4];
         
         //reduce heroes and monsters into list of all players
-        this.players = [this.heroes, this.monsters].reduce(function (a, b) {
-            return a.concat(b);
-        });
+        this.players = _.concat(this.heroes, this.monsters);
         
         
         //////////////////////////MANUAL GAME SETUP/////////////////////       
@@ -232,8 +110,13 @@ BaseBlitz.Game.prototype = {
     //varous testing things
     debug: function () {
 
-        var cover = this.coverBonus(this.currentPlayer, this.monster4);
-        console.log("-" + cover + " penalty to attack roll");
+        //var cover = this.coverBonus(this.currentPlayer, this.monster4);
+        //console.log("-" + cover + " penalty to attack roll");
+        //console.log(this.hero1.sheet.slots.mainhand);
+        //this.meleeBasic(this.currentPlayer, this.monster2);
+        //this.getPoint(this.currentPlayer);
+        //this.meleeBasic(this.currentPlayer, this.monster4);
+        console.log(this.players);
 
     },
     
@@ -365,7 +248,7 @@ BaseBlitz.Game.prototype = {
         // algebraic quadrant numbers
         switch (attackCorner) {
             case 1:
-                ax = 74;
+                ax = 76;
                 ay = 0;
                 break;
             case 2:
@@ -374,17 +257,17 @@ BaseBlitz.Game.prototype = {
                 break;
             case 3:
                 ax = 0;
-                ay = 74;
+                ay = 76;
                 break;
             case 4:
-                ax = 74;
-                ay = 74;
+                ax = 76;
+                ay = 76;
                 break;
         }
             
         switch (defendCorner) {
             case 1:
-                dx = 74;
+                dx = 76;
                 dy = 0;
                 break;
             case 2:
@@ -393,11 +276,11 @@ BaseBlitz.Game.prototype = {
                 break;
             case 3:
                 dx = 0;
-                dy = 74;
+                dy = 76;
                 break;
             case 4:
-                dx = 74;
-                dy = 74;
+                dx = 76;
+                dy = 76;
                 break;
         }
         
@@ -602,7 +485,11 @@ BaseBlitz.Game.prototype = {
     
     //processes an attack
     attack: function (attacker, defender, power) {
-        console.log(attacker + " attacks " + defender + " with " + power);
+        //power: callback function
+        //console.log(attacker + " attacks " + defender + " with " + power);
+        
+        power(attacker, defender, power);
+        
     },
     
     //returns an array of all enemies the player is flanking
@@ -1044,6 +931,29 @@ BaseBlitz.Game.prototype = {
         this.currentPlayer = nextPlayer;
         this.game.world.bringToTop(this.currentPlayer);        
         this.newTurn.dispatch();
+    },
+    
+    meleeBasic: function (attacker, defender) {        
+        var ac = defender.sheet.defenses.ac,
+            attackerPoint = this.getPoint(attacker),
+            defenderPoint = this.getPoint(defender),
+            roll = _.random(1, 20) + attacker.sheet.baseattack,
+            damage = _.random(attacker.sheet.slots.mainhand[0],attacker.sheet.slots.mainhand[1]) + attacker.sheet.basedamage;     
+            
+        
+        if (attackerPoint.distance(defenderPoint, true) === 1) {
+            if (roll >= ac) {
+                console.log(attacker.key + " rolls a " + roll + " vs. AC");
+                console.log(attacker.key + " does " + damage + " points of damage");
+                defender.sheet.hp -= damage;
+                //console.log(defender.sheet.hp);
+            } else {
+                console.log(attacker.key + " misses!");
+            }
+        } else {
+            console.log("Target not in range");
+        }
+         
     },
     
     update: function () {
