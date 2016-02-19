@@ -21,11 +21,10 @@ BaseBlitz.Preload.prototype = {
         this.load.image('spider', 'images/spider.png');
         this.load.image('fungus', 'images/fungus.png');
         this.load.image('golem', 'images/golem.png');
-        this.load.image('blindheim', 'images/blindheim.png');      
-        
+        this.load.image('blindheim', 'images/blindheim.png');        
     },
-    create: function () {
-        this.foo = {bar: "baz"};
+    create: function () {        
         this.state.start('Game');
     }
+
 };

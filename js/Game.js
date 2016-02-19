@@ -47,7 +47,7 @@ BaseBlitz.Game.prototype = {
         this.monster2.sheet = _.cloneDeep(pregen2);
         this.monster3 = this.game.add.sprite(75 * 9, 75 * 9, 'fungus');
         this.monster4 = this.game.add.sprite(75 * 6, 75 * 7, 'blindheim');
-        this.monsters = [this.monster1, this.monster2, this.monster3, this.monster4];
+        this.monsters = [this.monster1, this.monster2, this.monster3, this.monster4];  
         
         //reduce heroes and monsters into list of all players
         this.players = _.concat(this.heroes, this.monsters);
@@ -97,7 +97,7 @@ BaseBlitz.Game.prototype = {
         this.keyO = this.game.input.keyboard.addKey(Phaser.KeyCode.O);
         this.keyJ = this.game.input.keyboard.addKey(Phaser.KeyCode.J);
         this.keyK = this.game.input.keyboard.addKey(Phaser.KeyCode.K);
-        this.keyL = this.game.input.keyboard.addKey(Phaser.KeyCode.L);
+        this.keyL = this.game.input.keyboard.addKey(Phaser.KeyCode.L);  
                   
         this.keyD.onDown.add(this.debug, this);
         this.keyE.onDown.add(this.turnEnd, this);
@@ -115,9 +115,12 @@ BaseBlitz.Game.prototype = {
         //console.log(this.hero1.sheet.slots.mainhand);
         //this.meleeBasic(this.currentPlayer, this.monster2);
         //this.getPoint(this.currentPlayer);
-        this.rangedBasic(this.currentPlayer, this.monster2);
+        //this.rangedBasic(this.currentPlayer, this.monster2);
+        //this.hero1.anchor.set(0.5);
+        //this.hero1.tint = 0xff0000;
         //var test = _.pick(weapons)
-        //console.log(this.roll('3d6', 0));
+        var target = this.target(this.currentPlayer, 'ranged');
+        console.log(target);
 
     },
     
@@ -485,15 +488,75 @@ BaseBlitz.Game.prototype = {
         }
     },
     
-    //creates a new object from a prototype literal, taking an object as override values
-    extend: function (proto, literal) {
-        var result = Object.create(proto);
-        Object.keys(literal).forEach(function(key) {
-            result[key] = literal[key];
-        });
-        return result;
+    target: function (attacker, attackType) {
+        var attackerPoint = this.getPoint(attacker),            
+            enemies = [],
+            selectedEnemy = 0,
+            keyEnter = {};
+        
+        keyEnter = this.game.input.keyboard.addKey(Phaser.KeyCode.ENTER);
+        
+        this.keyLeft.onDown.remove(this.move, this, 0, 'player');
+        this.keyRight.onDown.remove(this.move, this, 0, 'player');
+        this.keyUp.onDown.remove(this.move, this, 0, 'player');
+        this.keyDown.onDown.remove(this.move, this, 0, 'player');        
+        
+        if (attackType === 'ranged') {
+            enemies = this.rangedEnemies(attacker);
+        } else {
+            enemies = this.adjacentEnemies(attacker, attacker.reach);
+        }
+        
+        for (i = 0; i < enemies.length; i += 1) {
+            if (enemies[i].tint === 16711680) {
+                selectedEnemy = i;
+            } 
+        }
+        
+        if (selectedEnemy === enemies.length - 1) {
+            j = 0;
+        } else {
+            j = selectedEnemy + 1;
+        }
+
+        enemies[selectedEnemy].tint = 0xFFFFFF;        
+        enemies[j].tint = 0xff0000;        
+
+        return enemies[j];
+        
     },
     
+    //finds all enemies in range of currently equipped weapon
+    rangedEnemies: function (player) {
+         //player = this.currentPlayer; //debug mode
+        var rangedList = [],
+            playerPoint = this.getPoint(player),
+            enemyPoint = {},
+            i = 0,
+            weapon = player.sheet.slots.mainhand,
+            longRange = _.floor(weapon.range[1] / 5);
+        
+        if (_.isArray(weapon.range) === true) {
+            //loops through opposite team and finds enemies in range with equipped weapon
+            if (this.entityType(player) === 'hero') {
+                for (i = 0; i < this.monsters.length; i += 1) {
+                    enemyPoint = this.getPoint(this.monsters[i]);
+                    if (playerPoint.distance(enemyPoint, true) <= longRange) {
+                        rangedList.push(this.monsters[i]);
+                    }
+                }
+            } else {
+                for (i = 0; i < this.heroes.length; i += 1) {
+                    enemyPoint = this.getPoint(this.heroes[i]);
+                    if (playerPoint.distance(enemyPoint, true) <= longRange) {
+                        rangedList.push(this.heroes[i]);
+                    }
+                }
+            }
+        } 
+        return rangedList;
+    },
+
     //processes an attack
     attack: function (attacker, defender, power) {
         //power: callback function
@@ -1019,5 +1082,5 @@ BaseBlitz.Game.prototype = {
         //this.line1.fromSprite(this.currentPlayer-75, this.monster1, false);
 
     },
-    
+
 };
