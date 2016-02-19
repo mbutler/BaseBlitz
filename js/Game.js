@@ -35,7 +35,7 @@ BaseBlitz.Game.prototype = {
         //heroes
         this.hero1 = this.game.add.sprite(75 * 1, 75 * 1, 'jingleboots');
         this.hero1.sheet = _.cloneDeep(pregen1);
-        this.hero1.sheet.slots.mainhand = weapons.greatsword;
+        this.hero1.sheet.slots.mainhand = _.clone(weapons.shortbow);
         this.hero2 = this.game.add.sprite(75 * 1, 75 * 3, 'rattlesocks');
         this.hero3 = this.game.add.sprite(75 * 2, 75 * 2, 'scoopercram');
         this.hero4 = this.game.add.sprite(75 * 3, 75 * 3, 'jumperstomp');
@@ -115,8 +115,9 @@ BaseBlitz.Game.prototype = {
         //console.log(this.hero1.sheet.slots.mainhand);
         //this.meleeBasic(this.currentPlayer, this.monster2);
         //this.getPoint(this.currentPlayer);
-        //this.meleeBasic(this.currentPlayer, this.monster4);
-        console.log(this.players);
+        this.rangedBasic(this.currentPlayer, this.monster2);
+        //var test = _.pick(weapons)
+        //console.log(this.roll('3d6', 0));
 
     },
     
@@ -139,6 +140,7 @@ BaseBlitz.Game.prototype = {
             m = 0;
         
         //calculate 16 lines: from every corner to every corner
+        //coverLine returns the number of barriers the line hits
         for (j = 1; j <= 4; j += 1) {
             for (i = 1; i <= 4; i += 1) {
                 blocked = this.coverLine(attacker, defender, j, i);
@@ -152,9 +154,9 @@ BaseBlitz.Game.prototype = {
             //console.log("literally an edge case");
         }
         
-        //must be at least one 0 for line of sight
+        //must be at least one 0 for line of sight, i.e. one line has to make it without being blocked
         if (_.indexOf(corner, 0) === -1) {
-            return "blocked";
+            return -99;
         }
         
         //group the array back into chunks representing the four corners
@@ -174,16 +176,18 @@ BaseBlitz.Game.prototype = {
             countedBlocks.push(counts);
         }        
         
-        //count number of open lines per corner
+        //count number of open lines per corner per thecompendium rules on p.219
+        //1 or 2 blocked lines = partial cover. 3 or 4 while still having line of sight = superior cover
         for (var m = 0; m < countedBlocks.length; m += 1) {
             cornerList.push(countedBlocks[m]["0"]);
         }
         
+        //this old thing
         function sortNumber(a,b) {
             return b - a;
         }
         
-        //sort from most open lines per corner to least
+        //sort from most open lines per corner to least so we can grab array index 0 (best)
         cornerList.sort(sortNumber);
         
         //find number of blocked lines on the best possible corner
@@ -197,30 +201,30 @@ BaseBlitz.Game.prototype = {
                 break;
             case 1:
                 if (edgeCase === true) {
-                    return "blocked";
+                    return -99;
                 } else {
                     //partial cover
-                    return 2; 
+                    return -2; 
                 }                
                 break;
             case 2:
                 if (edgeCase === true) {
-                    return "blocked";
+                    return -99;
                 } else {
                     //patial cover
-                    return 2;  
+                    return -2;  
                 }                
                 break;                
             case 3:
                 //superior cover
-                return 5; 
+                return -5; 
                 break;
             case 4:
                 //superior cover
-                return 5;
+                return -5;
                 break;
             default:
-                return "blocked";
+                return -99;
                 break;
         }
         
@@ -245,7 +249,8 @@ BaseBlitz.Game.prototype = {
             dx = 0,
             dy = 0;
         
-        // algebraic quadrant numbers
+        //modifier for Phaser.Line(x,y) based on corner number
+        // algebraic quadrant numbers, i.e. upper right corner is number 1
         switch (attackCorner) {
             case 1:
                 ax = 76;
@@ -284,9 +289,11 @@ BaseBlitz.Game.prototype = {
                 break;
         }
         
+        //draws the line and gets all the tiles it crosses over
         line = new Phaser.Line(attacker.x + ax, attacker.y + ay, defender.x + dx, defender.y + dy);
         tiles = this.backgroundlayer.getRayCastTiles(line);
         
+        //convert array of tiles into array of points
         for (j = 0; j < tiles.length; j += 1) {
             tileX = tiles[j].x;
             tileY = tiles[j].y;            
@@ -294,8 +301,11 @@ BaseBlitz.Game.prototype = {
             tilePoints.push(blockPoint);
         }
         
+        //add the defender point to an array for lodash 
         enemyPointList.push(defendPoint);
+        //find all the tile points that have blocks in them
         intersect = _.intersectionWith(barrierPoints, tilePoints, _.isEqual);
+        //remove defender from list as it is the target, not a barrier
         intersect = _.differenceWith(intersect, enemyPointList, _.isEqual);
         
         return intersect.length;
@@ -451,6 +461,7 @@ BaseBlitz.Game.prototype = {
         }
         
         //loops through an encoded array based on p.198 options of compendium
+        //each array element is the number of actions allowed per type
         //[[1,1,1],[1,0,2],[0,2,1],[0,1,2],[0,0,3]]
         //if action is >0, take it and subtract 1 until they are gone
         //store in player's metadata
@@ -546,9 +557,7 @@ BaseBlitz.Game.prototype = {
             i = 0;
         
         //get a list of all possible barriers. merge items and enemies
-        barriers = [items, enemies].reduce(function (a, b) {
-            return a.concat(b);
-        });
+        barriers = _.concat(items, enemies);
         
         //find only the squares that are adjacent and blocked
         for (i = 0; i < barriers.length; i += 1) {
@@ -933,27 +942,75 @@ BaseBlitz.Game.prototype = {
         this.newTurn.dispatch();
     },
     
+    roll: function (dice, modifier) {
+        var dice = _.split(dice, 'd'),
+            amount = dice[0],
+            sides = dice[1],
+            high = sides * amount,
+            roll = _.random(amount, high) + modifier;
+
+        return roll;       
+    },
+    
     meleeBasic: function (attacker, defender) {        
         var ac = defender.sheet.defenses.ac,
             attackerPoint = this.getPoint(attacker),
             defenderPoint = this.getPoint(defender),
-            roll = _.random(1, 20) + attacker.sheet.baseattack,
-            damage = _.random(attacker.sheet.slots.mainhand[0],attacker.sheet.slots.mainhand[1]) + attacker.sheet.basedamage;     
+            weapon = attacker.sheet.slots.mainhand,
+            modifier = attacker.sheet.abilities.str + weapon.prof,
+            attackRoll = this.roll('1d20', modifier),
+            distance = attackerPoint.distance(defenderPoint, true),
+            damageRoll = this.roll(weapon.damage, attacker.sheet.basedamage);     
             
         
-        if (attackerPoint.distance(defenderPoint, true) === 1) {
-            if (roll >= ac) {
-                console.log(attacker.key + " rolls a " + roll + " vs. AC");
-                console.log(attacker.key + " does " + damage + " points of damage");
-                defender.sheet.hp -= damage;
+        if (distance === 1) {
+            if (attackRoll >= ac) {
+                console.log(attacker.key + " rolls a " + attackRoll + " vs. AC");
+                console.log(attacker.key + " does " + damageRoll + " points of damage");
+                defender.sheet.hp -= damageRoll;
                 //console.log(defender.sheet.hp);
             } else {
                 console.log(attacker.key + " misses!");
             }
         } else {
-            console.log("Target not in range");
+            console.log("Out of range or no melee weapon equipped");
         }
          
+    },
+    
+    rangedBasic: function (attacker, defender) {
+        var ac = defender.sheet.defenses.ac,
+            attackerPoint = this.getPoint(attacker),
+            defenderPoint = this.getPoint(defender),
+            weapon = attacker.sheet.slots.mainhand,
+            shortRange = _.floor(weapon.range[0] / 5),
+            longRange = _.floor(weapon.range[1] / 5),
+            modifier = attacker.sheet.abilities.dex + weapon.prof,
+            attackRoll = 0,
+            damageRoll = 0,
+            cover = 0,
+            distance = attackerPoint.distance(defenderPoint, true);
+
+        if (distance > shortRange && distance <= longRange) {
+            modifier += -2;
+        }
+        
+        if (distance <= longRange && (_.isArray(weapon.range) === true)) {
+            cover = this.coverBonus(attacker, defender);
+            modifier += cover;
+            attackRoll = this.roll('1d20', modifier);
+            damageRoll = this.roll(weapon.damage, attacker.sheet.basedamage);
+            if (attackRoll >= ac) {
+                console.log(attacker.key + " rolls a " + attackRoll + " vs. AC");
+                console.log(attacker.key + " does " + damageRoll + " points of damage");
+                defender.sheet.hp -= damageRoll;
+                //console.log(defender.sheet.hp);
+            } else {
+                console.log(attacker.key + " misses!");
+            }
+        } else {
+            console.log("Out of range or no ranged weapon equipped");
+        }
     },
     
     update: function () {

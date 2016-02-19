@@ -1,4 +1,5 @@
 var sheet = {
+            level: 1,
             defenses: {
                 ac: 0,
                 fort: 0,
@@ -108,6 +109,7 @@ var sheet = {
 }; //do not modify
 
 var pregen1 = {
+            level: 1,
             hp: 27,
             defenses: {
                 ac: 18,
@@ -219,6 +221,7 @@ var pregen1 = {
 };
 
 var pregen2 = {
+            level: 1,
             hp: 23,
             defenses: {
                 ac: 16,
