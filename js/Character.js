@@ -76,7 +76,8 @@ var sheet = {
                 thievery: 0
             },
             powers: {},
-            baseattackmod: 0,
+            baseattack: 0,
+            basedamage: 0,
             resistences: {
                 acid: false,
                 cold: false,
@@ -104,7 +105,11 @@ var sheet = {
             equipment: {},
             metadata: {
                 movement: 0,
-                actions: [[1,1,1],[1,0,2],[0,2,1],[0,1,2],[0,0,3]]
+                actions: [[1,1,1],[1,0,2],[0,2,1],[0,1,2],[0,0,3]],
+                lastaction: {
+                    power: {},
+                    target: {}
+                }
             }
 }; //do not modify
 
@@ -216,7 +221,11 @@ var pregen1 = {
             equipment: {},
             metadata: {
                 movement: 0,
-                actions: [[1,1,1],[1,0,2],[0,2,1],[0,1,2],[0,0,3]]
+                actions: [[1,1,1],[1,0,2],[0,2,1],[0,1,2],[0,0,3]],
+                lastaction: {
+                    power: {},
+                    target: {}
+                }
             }
 };
 
@@ -299,7 +308,8 @@ var pregen2 = {
                 thievery: 0
             },
             powers: {},
-            baseattackmod: 5,
+            baseattack: 5,
+            basedamage: 4,
             resistences: {
                 acid: false,
                 cold: false,
@@ -327,7 +337,11 @@ var pregen2 = {
             equipment: {},
             metadata: {
                 movement: 0,
-                actions: [[1,1,1],[1,0,2],[0,2,1],[0,1,2],[0,0,3]]
+                actions: [[1,1,1],[1,0,2],[0,2,1],[0,1,2],[0,0,3]],
+                lastaction: {
+                    power: {},
+                    target: {}
+                }
             }
 };
     

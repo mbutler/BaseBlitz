@@ -35,7 +35,7 @@ BaseBlitz.Game.prototype = {
         //heroes
         this.hero1 = this.game.add.sprite(75 * 1, 75 * 1, 'jingleboots');
         this.hero1.sheet = _.cloneDeep(pregen1);
-        this.hero1.sheet.slots.mainhand = _.clone(weapons.shortbow);
+        this.hero1.sheet.slots.mainhand = _.clone(weapons.greatsword);
         this.hero2 = this.game.add.sprite(75 * 1, 75 * 3, 'rattlesocks');
         this.hero3 = this.game.add.sprite(75 * 2, 75 * 2, 'scoopercram');
         this.hero4 = this.game.add.sprite(75 * 3, 75 * 3, 'jumperstomp');
@@ -45,12 +45,26 @@ BaseBlitz.Game.prototype = {
         this.monster1 = this.game.add.sprite(75 * 6, 75 * 9, 'spider');
         this.monster2 = this.game.add.sprite(75 * 8, 75 * 8, 'golem');
         this.monster2.sheet = _.cloneDeep(pregen2);
+        this.monster2.sheet.slots.mainhand = _.clone(weapons.shortbow);
         this.monster3 = this.game.add.sprite(75 * 9, 75 * 9, 'fungus');
         this.monster4 = this.game.add.sprite(75 * 6, 75 * 7, 'blindheim');
         this.monsters = [this.monster1, this.monster2, this.monster3, this.monster4];  
         
         //reduce heroes and monsters into list of all players
         this.players = _.concat(this.heroes, this.monsters);
+        
+        this.standard = {
+            meleeBasic: {
+                function: this.meleeBasic,
+                type: 'melee',
+                name: 'Melee Basic Attack'
+            },
+            rangedBasic: {
+                function: this.rangedBasic,
+                type: 'ranged',
+                name: 'Ranged Basic Attack'
+            }
+        };
         
         
         //////////////////////////MANUAL GAME SETUP/////////////////////       
@@ -78,6 +92,7 @@ BaseBlitz.Game.prototype = {
         this.keyM = this.game.input.keyboard.addKey(Phaser.KeyCode.M);
         this.keyV = this.game.input.keyboard.addKey(Phaser.KeyCode.V);
         
+        
         this.keyLeft = this.game.input.keyboard.addKey(Phaser.KeyCode.LEFT);
         this.keyRight = this.game.input.keyboard.addKey(Phaser.KeyCode.RIGHT);
         this.keyUp = this.game.input.keyboard.addKey(Phaser.KeyCode.UP);
@@ -97,30 +112,39 @@ BaseBlitz.Game.prototype = {
         this.keyO = this.game.input.keyboard.addKey(Phaser.KeyCode.O);
         this.keyJ = this.game.input.keyboard.addKey(Phaser.KeyCode.J);
         this.keyK = this.game.input.keyboard.addKey(Phaser.KeyCode.K);
-        this.keyL = this.game.input.keyboard.addKey(Phaser.KeyCode.L);  
+        this.keyL = this.game.input.keyboard.addKey(Phaser.KeyCode.L);
+        
+        this.keyEnter = this.game.input.keyboard.addKey(Phaser.KeyCode.ENTER);
                   
         this.keyD.onDown.add(this.debug, this);
         this.keyE.onDown.add(this.turnEnd, this);
         this.keyS.onDown.add(this.standardAction, this);
         this.keyM.onDown.add(this.minorAction, this);
-        this.keyV.onDown.add(this.moveAction, this);       
+        this.keyV.onDown.add(this.moveAction, this);
+        
+        this.keyEnter.onDown.add(this.confirm, this);
+        
             
     },
     
     //varous testing things
     debug: function () {
+        var myName = 'Melee Basic Attack';
+        
+        var nice = _.filter(this.standard, {'name': myName});
 
-        //var cover = this.coverBonus(this.currentPlayer, this.monster4);
-        //console.log("-" + cover + " penalty to attack roll");
-        //console.log(this.hero1.sheet.slots.mainhand);
+        var names = _.mapValues(this.standard, 'name');
+        _.forOwn(names, function(value, key) {
+          console.log(key);
+        });
+        console.log(nice);
+        
+        //var power = this.powers.rangedBasic.function;
         //this.meleeBasic(this.currentPlayer, this.monster2);
-        //this.getPoint(this.currentPlayer);
-        //this.rangedBasic(this.currentPlayer, this.monster2);
-        //this.hero1.anchor.set(0.5);
-        //this.hero1.tint = 0xff0000;
+        //power.call(this, this.currentPlayer, this.monster2);
         //var test = _.pick(weapons)
-        var target = this.target(this.currentPlayer, 'ranged');
-        console.log(target);
+        //var target = this.target(this.currentPlayer, 'ranged');
+        //console.log(this.currentPlayer.sheet.metadata.lastaction.target);
 
     },
     
@@ -353,33 +377,37 @@ BaseBlitz.Game.prototype = {
     
     //handles end of turn and disabling movement controls
     turnEnd: function () {
-            this.keyLeft.onDown.remove(this.move, this, 0, 'player');
-            this.keyRight.onDown.remove(this.move, this, 0, 'player');
-            this.keyUp.onDown.remove(this.move, this, 0, 'player');
-            this.keyDown.onDown.remove(this.move, this, 0, 'player');
-
-            this.keyEight.onDown.remove(this.move, this, 0, 'player');
-            this.keySeven.onDown.remove(this.move, this, 0, 'player');
-            this.keyFour.onDown.remove(this.move, this, 0, 'player');
-            this.keyOne.onDown.remove(this.move, this, 0, 'player');
-            this.keyTwo.onDown.remove(this.move, this, 0, 'player');
-            this.keyThree.onDown.remove(this.move, this, 0, 'player');
-            this.keySix.onDown.remove(this.move, this, 0, 'player');
-            this.keyNine.onDown.remove(this.move, this, 0, 'player');
-            this.keyFive.onDown.remove(this.move, this, 0, 'player');
-
-            this.keyU.onDown.remove(this.move, this, 0, 'player');
-            this.keyO.onDown.remove(this.move, this, 0, 'player');
-            this.keyJ.onDown.remove(this.move, this, 0, 'player');
-            this.keyK.onDown.remove(this.move, this, 0, 'player');
-            this.keyL.onDown.remove(this.move, this, 0, 'player');
+        var i = 0;
+            
+        this.keyLeft.onDown.remove(this.move, this, 0, 'player');
+        this.keyRight.onDown.remove(this.move, this, 0, 'player');
+        this.keyUp.onDown.remove(this.move, this, 0, 'player');
+        this.keyDown.onDown.remove(this.move, this, 0, 'player');
+        this.keyEight.onDown.remove(this.move, this, 0, 'player');
+        this.keySeven.onDown.remove(this.move, this, 0, 'player');
+        this.keyFour.onDown.remove(this.move, this, 0, 'player');
+        this.keyOne.onDown.remove(this.move, this, 0, 'player');
+        this.keyTwo.onDown.remove(this.move, this, 0, 'player');
+        this.keyThree.onDown.remove(this.move, this, 0, 'player');
+        this.keySix.onDown.remove(this.move, this, 0, 'player');
+        this.keyNine.onDown.remove(this.move, this, 0, 'player');
+        this.keyFive.onDown.remove(this.move, this, 0, 'player');
+        this.keyU.onDown.remove(this.move, this, 0, 'player');
+        this.keyO.onDown.remove(this.move, this, 0, 'player');
+        this.keyJ.onDown.remove(this.move, this, 0, 'player');
+        this.keyK.onDown.remove(this.move, this, 0, 'player');
+        this.keyL.onDown.remove(this.move, this, 0, 'player');
+        this.keyS.onDown.add(this.standardAction, this);
+        this.keyM.onDown.add(this.minorAction, this);
+        this.keyV.onDown.add(this.moveAction, this);
         
-            this.keyS.onDown.add(this.standardAction, this);
-            this.keyM.onDown.add(this.minorAction, this);
-            this.keyV.onDown.add(this.moveAction, this);
-        
-            console.log(this.currentPlayer.key + " can make a saving throw");
-            this.switchPlayer();
+        //deselect all players, removing red tint
+        for (i = 0; i <this.players.length; i += 1) {
+            this.players[i].tint = 0xFFFFFF;
+        }
+            
+        console.log(this.currentPlayer.key + " can make a saving throw");
+        this.switchPlayer();
     },
     
     //handles start of round
@@ -395,11 +423,50 @@ BaseBlitz.Game.prototype = {
     },
     
     //handles taking standard action
-    standardAction: function () {        
-        if (this.useAction(this.currentPlayer, "standard") === true) {
-            console.log(this.currentPlayer.key + " using a standard action");
+    standardAction: function () {
+        var attack = 0,
+            name = {},
+            powerList = [],
+            i = 0,
+            output = '',
+            selection = '',
+            power = {},
+            weapon = this.currentPlayer.sheet.slots.mainhand;             
+        
+        //get all the names of the powers in the standard action list
+        names = _.mapValues(this.standard, 'name');
+        _.forOwn(names, function(value, key) {
+          powerList.push(value);
+        });
+        
+        //build the display list of standard action power names
+        for (i = 0; i < powerList.length; i += 1) {
+            output += i+')'+powerList[i]+'\n';
+        };
+        
+        //uses prompt for now
+        attack = prompt("Choose an action:\n"+output);
+        selection = powerList[attack];
+        //get the power of the selected power name
+        power = _.filter(this.standard, {'name': selection});
+        //weapon.category[1] === power[0].type
+        
+        //use the action and update character sheet with last action. make sure attack and weapon 
+        if (attack != null) {
+            if (this.useAction(this.currentPlayer, "standard") === true) {
+                console.log(this.currentPlayer.key + " using a standard action");
+                this.currentPlayer.sheet.metadata.lastaction.power = power[0];
+                
+                //only use attack method if the power is an attack
+                if (power[0].type === 'melee' || power[0].type === 'ranged') {
+                    this.attack();
+                }                
+                
+            } else {
+                console.log("No standard actions available");
+            }
         } else {
-            console.log("Choose another action");
+            console.log("Attack type not available");
         }
     },
     
@@ -488,41 +555,72 @@ BaseBlitz.Game.prototype = {
         }
     },
     
-    target: function (attacker, attackType) {
-        var attackerPoint = this.getPoint(attacker),            
+    //processes power selection and target based on metadata.lastaction
+    confirm: function () {
+        var power = this.currentPlayer.sheet.metadata.lastaction.power,
+            target = this.currentPlayer.sheet.metadata.lastaction.target;
+        
+        if (_.isEmpty(power) === false) {
+            //reset the lastaction to empty
+            this.currentPlayer.sheet.metadata.lastaction.power = {};
+            this.currentPlayer.sheet.metadata.lastaction.target = {};
+            //deselect all players, removing red tint
+            for (i = 0; i <this.players.length; i += 1) {
+                this.players[i].tint = 0xFFFFFF;
+            }
+            //calls the power
+            power.function.call(this, this.currentPlayer, target);            
+        } else {
+            console.log("No action available");
+        }
+        
+        
+    },
+    
+    //cycles through either ranged or melee enemies, highlighting red
+    target: function () {
+        var attacker = this.currentPlayer,
+            attackType = attacker.sheet.metadata.lastaction.power.type,
+            attackerPoint = this.getPoint(attacker),            
             enemies = [],
             selectedEnemy = 0,
+            enemy,
             keyEnter = {};
-        
-        keyEnter = this.game.input.keyboard.addKey(Phaser.KeyCode.ENTER);
-        
-        this.keyLeft.onDown.remove(this.move, this, 0, 'player');
-        this.keyRight.onDown.remove(this.move, this, 0, 'player');
-        this.keyUp.onDown.remove(this.move, this, 0, 'player');
-        this.keyDown.onDown.remove(this.move, this, 0, 'player');        
-        
+      
+        //gets the appropriate group
         if (attackType === 'ranged') {
             enemies = this.rangedEnemies(attacker);
         } else {
             enemies = this.adjacentEnemies(attacker, attacker.reach);
         }
         
-        for (i = 0; i < enemies.length; i += 1) {
-            if (enemies[i].tint === 16711680) {
-                selectedEnemy = i;
-            } 
+        if (enemies.length > 0) {
+            //finds if there's already a selected (red) sprite. 16711680 is decimal for red
+            for (i = 0; i < enemies.length; i += 1) {
+                if (enemies[i].tint === 16711680) {
+                    selectedEnemy = i;
+                } 
+            }
+            
+            //if no previously selected, make first enemy selected, otherwise select next enemy in list
+            if (selectedEnemy === enemies.length - 1) {
+                j = 0;
+            } else {
+                j = selectedEnemy + 1;
+            }
+            
+            //make previously selected not-red and current one red
+            enemies[selectedEnemy].tint = 0xFFFFFF;        
+            enemies[j].tint = 0xff0000;
+            //update character sheet with selected enemy to target
+            this.currentPlayer.sheet.metadata.lastaction.target = enemies[j];
+            return enemies[j];
+        } else {
+            console.log("No valid targets");
+            console.log(this.currentPlayer.sheet.metadata.actions);
         }
         
-        if (selectedEnemy === enemies.length - 1) {
-            j = 0;
-        } else {
-            j = selectedEnemy + 1;
-        }
-
-        enemies[selectedEnemy].tint = 0xFFFFFF;        
-        enemies[j].tint = 0xff0000;        
-
-        return enemies[j];
+        
         
     },
     
@@ -558,11 +656,11 @@ BaseBlitz.Game.prototype = {
     },
 
     //processes an attack
-    attack: function (attacker, defender, power) {
-        //power: callback function
-        //console.log(attacker + " attacks " + defender + " with " + power);
-        
-        power(attacker, defender, power);
+    attack: function () {
+   
+        this.keyT = this.game.input.keyboard.addKey(Phaser.KeyCode.T);
+        this.keyT.onDown.add(this.target, this);       
+        this.target();
         
     },
     
@@ -1005,6 +1103,7 @@ BaseBlitz.Game.prototype = {
         this.newTurn.dispatch();
     },
     
+    //returns the result of specified dice roll
     roll: function (dice, modifier) {
         var dice = _.split(dice, 'd'),
             amount = dice[0],
@@ -1015,6 +1114,7 @@ BaseBlitz.Game.prototype = {
         return roll;       
     },
     
+    //computes a melee attack and modifies character sheets
     meleeBasic: function (attacker, defender) {        
         var ac = defender.sheet.defenses.ac,
             attackerPoint = this.getPoint(attacker),
@@ -1023,8 +1123,7 @@ BaseBlitz.Game.prototype = {
             modifier = attacker.sheet.abilities.str + weapon.prof,
             attackRoll = this.roll('1d20', modifier),
             distance = attackerPoint.distance(defenderPoint, true),
-            damageRoll = this.roll(weapon.damage, attacker.sheet.basedamage);     
-            
+            damageRoll = this.roll(weapon.damage, attacker.sheet.basedamage);
         
         if (distance === 1) {
             if (attackRoll >= ac) {
@@ -1041,6 +1140,7 @@ BaseBlitz.Game.prototype = {
          
     },
     
+    //computes ranged attack and modifies character sheets
     rangedBasic: function (attacker, defender) {
         var ac = defender.sheet.defenses.ac,
             attackerPoint = this.getPoint(attacker),
@@ -1063,6 +1163,7 @@ BaseBlitz.Game.prototype = {
             modifier += cover;
             attackRoll = this.roll('1d20', modifier);
             damageRoll = this.roll(weapon.damage, attacker.sheet.basedamage);
+            
             if (attackRoll >= ac) {
                 console.log(attacker.key + " rolls a " + attackRoll + " vs. AC");
                 console.log(attacker.key + " does " + damageRoll + " points of damage");
