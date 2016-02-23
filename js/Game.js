@@ -35,7 +35,7 @@ BaseBlitz.Game.prototype = {
         //heroes
         this.hero1 = this.game.add.sprite(75 * 1, 75 * 1, 'jingleboots');
         this.hero1.sheet = _.cloneDeep(pregen1);
-        this.hero1.sheet.slots.mainhand = _.clone(weapons.greatsword);
+        this.hero1.sheet.slots.mainhand = _.clone(weapons.greataxe);
         this.hero2 = this.game.add.sprite(75 * 1, 75 * 3, 'rattlesocks');
         this.hero3 = this.game.add.sprite(75 * 2, 75 * 2, 'scoopercram');
         this.hero4 = this.game.add.sprite(75 * 3, 75 * 3, 'jumperstomp');
@@ -45,7 +45,7 @@ BaseBlitz.Game.prototype = {
         this.monster1 = this.game.add.sprite(75 * 6, 75 * 9, 'spider');
         this.monster2 = this.game.add.sprite(75 * 8, 75 * 8, 'golem');
         this.monster2.sheet = _.cloneDeep(pregen2);
-        this.monster2.sheet.slots.mainhand = _.clone(weapons.shortbow);
+        this.monster2.sheet.slots.mainhand = _.clone(weapons.greataxe);
         this.monster3 = this.game.add.sprite(75 * 9, 75 * 9, 'fungus');
         this.monster4 = this.game.add.sprite(75 * 6, 75 * 7, 'blindheim');
         this.monsters = [this.monster1, this.monster2, this.monster3, this.monster4];  
@@ -129,16 +129,9 @@ BaseBlitz.Game.prototype = {
     
     //varous testing things
     debug: function () {
-        var myName = 'Melee Basic Attack';
         
-        var nice = _.filter(this.standard, {'name': myName});
-
-        var names = _.mapValues(this.standard, 'name');
-        _.forOwn(names, function(value, key) {
-          console.log(key);
-        });
-        console.log(nice);
-        
+              
+        this.removePlayer(this.currentPlayer);
         //var power = this.powers.rangedBasic.function;
         //this.meleeBasic(this.currentPlayer, this.monster2);
         //power.call(this, this.currentPlayer, this.monster2);
@@ -146,6 +139,21 @@ BaseBlitz.Game.prototype = {
         //var target = this.target(this.currentPlayer, 'ranged');
         //console.log(this.currentPlayer.sheet.metadata.lastaction.target);
 
+    },
+    
+    //destroys a sprite and removes it from initiative, player list, and appropriate team
+    removePlayer: function (player) {
+        player.destroy();
+        _.pull(this.initOrder, player);
+        _.pull(this.players, player);
+        
+        if (this.entityType(player) === "hero") {
+            _.pull(this.heroes, player);
+        } else if (this.entityType(player) === "monster"){
+            _.pull(this.monsters, player);
+        }
+        
+        this.switchPlayer();
     },
     
     //returns the attack modifier based on calculated cover
@@ -220,7 +228,7 @@ BaseBlitz.Game.prototype = {
         //find number of blocked lines on the best possible corner
         blocksOnBestCorner = 4 - cornerList[0];
         
-        //find attack modifier based on number of blocked lines
+        //find attack modifier based on number of blocked lines. -99 is a blocked shot
         switch (blocksOnBestCorner) {
             case 0:
                 //no cover
@@ -564,6 +572,7 @@ BaseBlitz.Game.prototype = {
             //reset the lastaction to empty
             this.currentPlayer.sheet.metadata.lastaction.power = {};
             this.currentPlayer.sheet.metadata.lastaction.target = {};
+            this.keyT.onDown.remove(this.target, this);
             //deselect all players, removing red tint
             for (i = 0; i <this.players.length; i += 1) {
                 this.players[i].tint = 0xFFFFFF;
@@ -617,7 +626,6 @@ BaseBlitz.Game.prototype = {
             return enemies[j];
         } else {
             console.log("No valid targets");
-            console.log(this.currentPlayer.sheet.metadata.actions);
         }
         
         
@@ -1078,6 +1086,7 @@ BaseBlitz.Game.prototype = {
     opportunityAttack: function (defender) {
         var adjacentList = this.adjacentEnemies(defender),
             i = 0;
+        
         for (i = 0; i < adjacentList.length; i += 1) {
             console.log(adjacentList[i].key + " gets an opportunity attack!");
         }
@@ -1114,6 +1123,42 @@ BaseBlitz.Game.prototype = {
         return roll;       
     },
     
+    //subtracts damage from target hit points, makes bloodied and unconscious if needed
+    hit: function (target, damage) {
+        var bloodied = target.sheet.bloodiedval,
+            absoluteHp = 0 - bloodied;
+        
+        target.sheet.hp -= damage;
+        
+        if (target.sheet.hp <= bloodied && target.sheet.hp >= 0) {
+            //make bloodied
+            console.log(target.key + " is bloodied");
+            target.sheet.conditions.bloodied = true;
+        } else if (target.sheet.hp <= 0 && target.sheet.hp >= absoluteHp) {
+            //make unconscious
+            console.log(target.key + " is unconscious");
+            target.alpha = 0.5;
+            target.sheet.conditions.unconscious = true;
+        } else if (target.sheet.hp <= absoluteHp) {
+            console.log(target.key + " is dead");
+            this.removePlayer(target);
+        }
+    },
+    
+    //adds health to target and removes bloodied and unconscious if needed
+    heal: function (target, health) {
+        var bloodied = target.sheet.bloodiedval;
+        
+        target.sheet.hp += health;
+        
+        if (target.sheet.hp > bloodied) {
+            target.sheet.conditions.bloodied = false;            
+        } else if (target.sheet.hp > 0) {
+            console.log(target.key + " is conscious");
+            target.alpha = 1;
+        }        
+    },
+    
     //computes a melee attack and modifies character sheets
     meleeBasic: function (attacker, defender) {        
         var ac = defender.sheet.defenses.ac,
@@ -1129,8 +1174,7 @@ BaseBlitz.Game.prototype = {
             if (attackRoll >= ac) {
                 console.log(attacker.key + " rolls a " + attackRoll + " vs. AC");
                 console.log(attacker.key + " does " + damageRoll + " points of damage");
-                defender.sheet.hp -= damageRoll;
-                //console.log(defender.sheet.hp);
+                this.hit(defender, damageRoll);
             } else {
                 console.log(attacker.key + " misses!");
             }
@@ -1167,8 +1211,7 @@ BaseBlitz.Game.prototype = {
             if (attackRoll >= ac) {
                 console.log(attacker.key + " rolls a " + attackRoll + " vs. AC");
                 console.log(attacker.key + " does " + damageRoll + " points of damage");
-                defender.sheet.hp -= damageRoll;
-                //console.log(defender.sheet.hp);
+                this.hit(defender, damageRoll);
             } else {
                 console.log(attacker.key + " misses!");
             }
@@ -1180,7 +1223,6 @@ BaseBlitz.Game.prototype = {
     update: function () {
 
         this.game.camera.follow(this.currentPlayer);
-        //this.line1.fromSprite(this.currentPlayer-75, this.monster1, false);
 
     },
 

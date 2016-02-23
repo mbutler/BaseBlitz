@@ -1,5 +1,7 @@
 var sheet = {
             level: 1,
+            hp: 0,
+            bloodiedval: 0,
             defenses: {
                 ac: 0,
                 fort: 0,
@@ -25,6 +27,7 @@ var sheet = {
             reach: 1,
             conditions: {
                 blinded: false,
+                bloodied: false,
                 dazed: false,
                 deafened: false,
                 dominated: false,
@@ -38,7 +41,7 @@ var sheet = {
                 slowed: false,
                 stunned: false,
                 surprised: false,
-                unconscioius: false,
+                unconscious: false,
                 weakened: false
             },
             slots: {
@@ -116,6 +119,7 @@ var sheet = {
 var pregen1 = {
             level: 1,
             hp: 27,
+            bloodiedval: 13,
             defenses: {
                 ac: 18,
                 fort: 16,
@@ -141,6 +145,7 @@ var pregen1 = {
             reach: 1,
             conditions: {
                 blinded: false,
+                bloodied: false,
                 dazed: false,
                 deafened: false,
                 dominated: false,
@@ -154,7 +159,7 @@ var pregen1 = {
                 slowed: false,
                 stunned: false,
                 surprised: false,
-                unconscioius: false,
+                unconscious: false,
                 weakened: false
             },
             slots: {
@@ -232,6 +237,7 @@ var pregen1 = {
 var pregen2 = {
             level: 1,
             hp: 23,
+            bloodiedval: 11,
             defenses: {
                 ac: 16,
                 fort: 14,
@@ -257,6 +263,7 @@ var pregen2 = {
             reach: 1,
             conditions: {
                 blinded: false,
+                bloodied: false,
                 dazed: false,
                 deafened: false,
                 dominated: false,
@@ -270,7 +277,7 @@ var pregen2 = {
                 slowed: false,
                 stunned: false,
                 surprised: false,
-                unconscioius: false,
+                unconscious: false,
                 weakened: false
             },
             slots: {
