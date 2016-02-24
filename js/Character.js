@@ -79,8 +79,8 @@ var sheet = {
                 thievery: 0
             },
             powers: {},
-            baseattack: 0,
-            basedamage: 0,
+            weaponProf: [],
+            armorProf: [],
             resistences: {
                 acid: false,
                 cold: false,
@@ -112,7 +112,12 @@ var sheet = {
                 lastaction: {
                     power: {},
                     target: {}
-                }
+                },
+                startOfTurn: [],
+                endOfTurn: [],
+                atWill: [],
+                encounter: [],
+                daily: []
             }
 }; //do not modify
 
@@ -197,8 +202,8 @@ var pregen1 = {
                 thievery: 0
             },
             powers: {},
-            baseattack: 7,
-            basedamage: 4,
+            weaponProf: ['simple melee', 'military melee', 'military ranged', 'simple ranged'],
+            armorProf: [],
             resistences: {
                 acid: false,
                 cold: false,
@@ -230,7 +235,12 @@ var pregen1 = {
                 lastaction: {
                     power: {},
                     target: {}
-                }
+                },
+                startOfTurn: [],
+                endOfTurn: [],
+                atWill: [],
+                encounter: [],
+                daily: []
             }
 };
 
@@ -315,8 +325,8 @@ var pregen2 = {
                 thievery: 0
             },
             powers: {},
-            baseattack: 5,
-            basedamage: 4,
+            weaponProf: ['simple melee'],
+            armorProf: [],
             resistences: {
                 acid: false,
                 cold: false,
@@ -348,7 +358,13 @@ var pregen2 = {
                 lastaction: {
                     power: {},
                     target: {}
-                }
+                },
+                startOfTurn: [],
+                endOfTurn: [],
+                atWill: [],
+                encounter: [],
+                daily: []
+                
             }
 };
     

@@ -5,10 +5,10 @@ BaseBlitz.Game = function () {};
 BaseBlitz.Game.prototype = {
     
     init: function () {
-            this.initOrder = [];
-            this.initRolls = [];
-            this.heroes = [];
-            this.monsters = [];
+        this.initOrder = [];
+        this.initRolls = [];
+        this.heroes = [];
+        this.monsters = [];
     },
     
     create: function () {
@@ -37,17 +37,29 @@ BaseBlitz.Game.prototype = {
         this.hero1.sheet = _.cloneDeep(pregen1);
         this.hero1.sheet.slots.mainhand = _.clone(weapons.greataxe);
         this.hero2 = this.game.add.sprite(75 * 1, 75 * 3, 'rattlesocks');
+        this.hero2.sheet = _.cloneDeep(pregen1);
+        this.hero2.sheet.slots.mainhand = _.clone(weapons.greataxe);
         this.hero3 = this.game.add.sprite(75 * 2, 75 * 2, 'scoopercram');
+        this.hero3.sheet = _.cloneDeep(pregen1);
+        this.hero3.sheet.slots.mainhand = _.clone(weapons.greataxe);
         this.hero4 = this.game.add.sprite(75 * 3, 75 * 3, 'jumperstomp');
+        this.hero4.sheet = _.cloneDeep(pregen1);
+        this.hero4.sheet.slots.mainhand = _.clone(weapons.greataxe);
         this.heroes = [this.hero1, this.hero2, this.hero3, this.hero4];
         
         //monsters
         this.monster1 = this.game.add.sprite(75 * 6, 75 * 9, 'spider');
+        this.monster1.sheet = _.cloneDeep(pregen2);
+        this.monster1.sheet.slots.mainhand = _.clone(weapons.dagger);
         this.monster2 = this.game.add.sprite(75 * 8, 75 * 8, 'golem');
         this.monster2.sheet = _.cloneDeep(pregen2);
-        this.monster2.sheet.slots.mainhand = _.clone(weapons.greataxe);
+        this.monster2.sheet.slots.mainhand = _.clone(weapons.club);
         this.monster3 = this.game.add.sprite(75 * 9, 75 * 9, 'fungus');
+        this.monster3.sheet = _.cloneDeep(pregen2);
+        this.monster3.sheet.slots.mainhand = _.clone(weapons.greataxe);
         this.monster4 = this.game.add.sprite(75 * 6, 75 * 7, 'blindheim');
+        this.monster4.sheet = _.cloneDeep(pregen2);
+        this.monster4.sheet.slots.mainhand = _.clone(weapons.crossbow);
         this.monsters = [this.monster1, this.monster2, this.monster3, this.monster4];  
         
         //reduce heroes and monsters into list of all players
@@ -55,14 +67,14 @@ BaseBlitz.Game.prototype = {
         
         this.standard = {
             meleeBasic: {
-                function: this.meleeBasic,
-                type: 'melee',
-                name: 'Melee Basic Attack'
+                'function': this.meleeBasic,
+                'type': 'melee',
+                'name': 'Melee Basic Attack'
             },
             rangedBasic: {
-                function: this.rangedBasic,
-                type: 'ranged',
-                name: 'Ranged Basic Attack'
+                'function': this.rangedBasic,
+                'type': 'ranged',
+                'name': 'Ranged Basic Attack'
             }
         };
         
@@ -131,7 +143,7 @@ BaseBlitz.Game.prototype = {
     debug: function () {
         
               
-        this.removePlayer(this.currentPlayer);
+        console.log(_.floor(this.currentPlayer.sheet.level / 2));
         //var power = this.powers.rangedBasic.function;
         //this.meleeBasic(this.currentPlayer, this.monster2);
         //power.call(this, this.currentPlayer, this.monster2);
@@ -149,7 +161,7 @@ BaseBlitz.Game.prototype = {
         
         if (this.entityType(player) === "hero") {
             _.pull(this.heroes, player);
-        } else if (this.entityType(player) === "monster"){
+        } else if (this.entityType(player) === "monster") {
             _.pull(this.monsters, player);
         }
         
@@ -179,7 +191,7 @@ BaseBlitz.Game.prototype = {
         for (j = 1; j <= 4; j += 1) {
             for (i = 1; i <= 4; i += 1) {
                 blocked = this.coverLine(attacker, defender, j, i);
-                corner.push(blocked)
+                corner.push(blocked);
             }
         }
         
@@ -207,13 +219,13 @@ BaseBlitz.Game.prototype = {
         //find the best corner (most unblocked lines)
         for (k = 0; k < bestshots.length; k += 1) { 
             var counts = {};
-            bestshots[k].forEach(function(x) { counts[x] = (counts[x] || 0)+1; });
+            bestshots[k].forEach(function (x) { counts[x] = (counts[x] || 0) + 1; });
             countedBlocks.push(counts);
         }        
         
         //count number of open lines per corner per thecompendium rules on p.219
         //1 or 2 blocked lines = partial cover. 3 or 4 while still having line of sight = superior cover
-        for (var m = 0; m < countedBlocks.length; m += 1) {
+        for (m = 0; m < countedBlocks.length; m += 1) {
             cornerList.push(countedBlocks[m]["0"]);
         }
         
@@ -233,7 +245,6 @@ BaseBlitz.Game.prototype = {
             case 0:
                 //no cover
                 return 0;
-                break;
             case 1:
                 if (edgeCase === true) {
                     return -99;
@@ -1037,46 +1048,46 @@ BaseBlitz.Game.prototype = {
             case 'W':
                 entity.x -= this.map.tileWidth;
                 console.log(entity.key + " " + moveType + " west");
-                this.flankedEnemies(entity);
+                //this.flankedEnemies(entity);
                 break;
             case 'E':
                 entity.x += this.map.tileWidth;
                 console.log(entity.key + " " + moveType + " east");
-                this.flankedEnemies(entity);
+                //this.flankedEnemies(entity);
                 break;
             case 'N':
                 entity.y -= this.map.tileWidth;
                 console.log(entity.key + " " + moveType + " north");
-                this.flankedEnemies(entity);
+                //this.flankedEnemies(entity);
                 break;
             case 'S':
                 entity.y += this.map.tileWidth;
                 console.log(entity.key + " " + moveType + " south");
-                this.flankedEnemies(entity);
+                //this.flankedEnemies(entity);
                 break;
             case 'NW':
                 entity.x -= this.map.tileWidth;
                 entity.y -= this.map.tileWidth;
                 console.log(entity.key + " " + moveType + " northwest");
-                this.flankedEnemies(entity);
+                //this.flankedEnemies(entity);
                 break;
             case 'SW':
                 entity.x -= this.map.tileWidth;
                 entity.y += this.map.tileWidth;
                 console.log(entity.key + " " + moveType + " southwest");
-                this.flankedEnemies(entity);
+                //this.flankedEnemies(entity);
                 break;
             case 'SE':
                 entity.x += this.map.tileWidth;
                 entity.y += this.map.tileWidth;
                 console.log(entity.key + " " + moveType + " southeast");
-                this.flankedEnemies(entity);
+                //this.flankedEnemies(entity);
                 break;
             case 'NE':
                 entity.x += this.map.tileWidth;
                 entity.y -= this.map.tileWidth;
                 console.log(entity.key + " " + moveType + " northeast");
-                this.flankedEnemies(entity);
+                //this.flankedEnemies(entity);
                 break;
             }
         }
@@ -1165,12 +1176,29 @@ BaseBlitz.Game.prototype = {
             attackerPoint = this.getPoint(attacker),
             defenderPoint = this.getPoint(defender),
             weapon = attacker.sheet.slots.mainhand,
-            modifier = attacker.sheet.abilities.str + weapon.prof,
-            attackRoll = this.roll('1d20', modifier),
+            modifier = attacker.sheet.abilities.str,
+            attackRoll = 0,
             distance = attackerPoint.distance(defenderPoint, true),
-            damageRoll = this.roll(weapon.damage, attacker.sheet.basedamage);
+            damageRoll = this.roll(weapon.damage, attacker.sheet.abilities.str),
+            flankedEnemies = this.flankedEnemies(attacker);
         
-        if (distance === 1) {
+        //weapon proficiency
+        if (_.indexOf(attacker.sheet.weaponProf, weapon.category) !== -1) {
+            modifier += weapon.prof;
+        }
+        
+        //flanking combat advantage
+        if (_.indexOf(flankedEnemies, defender) !== -1) {
+            modifier += 2;
+            console.log("+2 flanking bonus");
+        }
+        
+        //half level bonus
+        modifier += _.floor(attacker.sheet.level / 2);
+               
+        attackRoll = this.roll('1d20', modifier);
+        
+        if (distance <= attacker.sheet.reach) {
             if (attackRoll >= ac) {
                 console.log(attacker.key + " rolls a " + attackRoll + " vs. AC");
                 console.log(attacker.key + " does " + damageRoll + " points of damage");
@@ -1192,12 +1220,18 @@ BaseBlitz.Game.prototype = {
             weapon = attacker.sheet.slots.mainhand,
             shortRange = _.floor(weapon.range[0] / 5),
             longRange = _.floor(weapon.range[1] / 5),
-            modifier = attacker.sheet.abilities.dex + weapon.prof,
+            modifier = attacker.sheet.abilities.dex,
             attackRoll = 0,
             damageRoll = 0,
             cover = 0,
             distance = attackerPoint.distance(defenderPoint, true);
-
+        
+        //weapon proficiency
+        if (_.indexOf(attacker.sheet.weaponProf, weapon.category) !== -1) {
+            modifier += weapon.prof;
+        }
+        
+        //long range
         if (distance > shortRange && distance <= longRange) {
             modifier += -2;
         }
@@ -1206,7 +1240,7 @@ BaseBlitz.Game.prototype = {
             cover = this.coverBonus(attacker, defender);
             modifier += cover;
             attackRoll = this.roll('1d20', modifier);
-            damageRoll = this.roll(weapon.damage, attacker.sheet.basedamage);
+            damageRoll = this.roll(weapon.damage, attacker.sheet.abilities.dex);
             
             if (attackRoll >= ac) {
                 console.log(attacker.key + " rolls a " + attackRoll + " vs. AC");
