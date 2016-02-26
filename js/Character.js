@@ -106,6 +106,8 @@ var sheet = {
                 thunder: false
             },
             equipment: {},
+            miscAttackMod: 0,
+            miscDamageMod: 0,
             metadata: {
                 movement: 0,
                 actions: [[1,1,1],[1,0,2],[0,2,1],[0,1,2],[0,0,3]],
@@ -229,6 +231,8 @@ var pregen1 = {
                 thunder: false
             },
             equipment: {},
+            miscAttackMod: 0,
+            miscDamageMod: 0,
             metadata: {
                 movement: 0,
                 actions: [[1,1,1],[1,0,2],[0,2,1],[0,1,2],[0,0,3]],
@@ -352,6 +356,8 @@ var pregen2 = {
                 thunder: false
             },
             equipment: {},
+            miscAttackMod: 0,
+            miscDamageMod: 0,
             metadata: {
                 movement: 0,
                 actions: [[1,1,1],[1,0,2],[0,2,1],[0,1,2],[0,0,3]],

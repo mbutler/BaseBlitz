@@ -67,14 +67,19 @@ BaseBlitz.Game.prototype = {
         
         this.standard = {
             meleeBasic: {
-                'function': this.meleeBasic,
+                'method': this.meleeBasic,
                 'type': 'melee',
                 'name': 'Melee Basic Attack'
             },
             rangedBasic: {
-                'function': this.rangedBasic,
+                'method': this.rangedBasic,
                 'type': 'ranged',
                 'name': 'Ranged Basic Attack'
+            },
+            priestsShield: {
+                'method': this.priestsShield,
+                'type': 'melee',
+                'name': 'Priests Shield'
             }
         };
         
@@ -143,7 +148,7 @@ BaseBlitz.Game.prototype = {
     debug: function () {
         
               
-        console.log(_.floor(this.currentPlayer.sheet.level / 2));
+        console.log(this.adjacentAllies(this.currentPlayer));
         //var power = this.powers.rangedBasic.function;
         //this.meleeBasic(this.currentPlayer, this.monster2);
         //power.call(this, this.currentPlayer, this.monster2);
@@ -390,13 +395,17 @@ BaseBlitz.Game.prototype = {
         this.currentPlayer.sheet.metadata.actions = [[1,1,1],[1,0,2],[0,2,1],[0,1,2],[0,0,3]];
         this.currentPlayer.sheet.metadata.movement = this.currentPlayer.sheet.speed;
         console.log("It is now " + this.currentPlayer.key + "'s turn!");
-        console.log("special abilities, ongoing damage, regeneration, some effects end");
-        console.log("++++++++++++");        
+        //console.log("special abilities, ongoing damage, regeneration, some effects end");
+        //console.log("++++++++++++");        
     },
     
     //handles end of turn and disabling movement controls
     turnEnd: function () {
-        var i = 0;
+        var i = 0,
+            j = 0,
+            action = {},
+            round = {},
+            delayList = [];
             
         this.keyLeft.onDown.remove(this.move, this, 0, 'player');
         this.keyRight.onDown.remove(this.move, this, 0, 'player');
@@ -421,11 +430,31 @@ BaseBlitz.Game.prototype = {
         this.keyV.onDown.add(this.moveAction, this);
         
         //deselect all players, removing red tint
-        for (i = 0; i <this.players.length; i += 1) {
+        for (i = 0; i < this.players.length; i += 1) {
             this.players[i].tint = 0xFFFFFF;
+        }       
+        
+        //a list of all the delayed methods that run on specific rounds determined by the power
+        delayList = this.currentPlayer.sheet.metadata.endOfTurn;
+        
+        //TODO: remove method from delayList if saving throw made
+        console.log(this.currentPlayer.key + " can make a saving throw");        
+        
+        //check each delay object in list. If it's the current round, execute the action 
+        if (delayList.length > 0) {
+            for (j = 0; j < delayList.length; j += 1) {
+                round = delayList[j].round;
+                if (round === this.round) {
+                    action = delayList[j].method;
+                    //execute the method in this context
+                    action.call(this);
+                    //remove the method from the endOfTurn list
+                    //_.pull(delayList, delayList[j]);
+                }
+            }
         }
-            
-        console.log(this.currentPlayer.key + " can make a saving throw");
+        console.log(this.currentPlayer.sheet.defenses.ac);
+        
         this.switchPlayer();
     },
     
@@ -589,7 +618,7 @@ BaseBlitz.Game.prototype = {
                 this.players[i].tint = 0xFFFFFF;
             }
             //calls the power
-            power.function.call(this, this.currentPlayer, target);            
+            power.method.call(this, this.currentPlayer, target);            
         } else {
             console.log("No action available");
         }
@@ -774,6 +803,31 @@ BaseBlitz.Game.prototype = {
                 enemyPoint = this.getPoint(this.heroes[i]);
                 if (playerPoint.distance(enemyPoint, true) === reach) {
                     adjacentList.push(this.heroes[i]);
+                }
+            }
+        }
+        return adjacentList;
+    },
+    
+    //finds all allies adjacent to the player
+    adjacentAllies: function (player) {
+        var adjacentList = [],
+            playerPoint = this.getPoint(player),
+            allyPoint = {},
+            i = 0;
+        
+        if (this.entityType(player) === 'hero') {
+            for (i = 0; i < this.heroes.length; i += 1) {
+                allyPoint = this.getPoint(this.heroes[i]);
+                if (playerPoint.distance(allyPoint, true) === 1) {
+                    adjacentList.push(this.heroes[i]);
+                }
+            }
+        } else {
+            for (i = 0; i < this.monsters.length; i += 1) {
+                allyPoint = this.getPoint(this.monsters[i]);
+                if (playerPoint.distance(allyPoint, true) === 1) {
+                    adjacentList.push(this.monsters[i]);
                 }
             }
         }
@@ -1016,8 +1070,7 @@ BaseBlitz.Game.prototype = {
     move: function (context, type, direction) {        
         var entity = {},
             moveType = '',
-            keycode = '',
-            adjacentList = [];
+            keycode = '';
         
         //use 'player' when adding the listener, otherwise the sprite object to move without input
         if (type === 'player') {
@@ -1195,10 +1248,16 @@ BaseBlitz.Game.prototype = {
         
         //half level bonus
         modifier += _.floor(attacker.sheet.level / 2);
+        
+        //other attack mods
+        modifier += attacker.sheet.miscAttackMod;
                
         attackRoll = this.roll('1d20', modifier);
         
-        if (distance <= attacker.sheet.reach) {
+        //any misc damage
+        damageRoll += attacker.sheet.miscDamageMod;
+        
+        if (distance <= attacker.sheet.reach && (_.isArray(weapon.range) === false)) {
             if (attackRoll >= ac) {
                 console.log(attacker.key + " rolls a " + attackRoll + " vs. AC");
                 console.log(attacker.key + " does " + damageRoll + " points of damage");
@@ -1236,11 +1295,15 @@ BaseBlitz.Game.prototype = {
             modifier += -2;
         }
         
+        //other attack mods
+        modifier += attacker.sheet.miscAttackMod;
+        
         if (distance <= longRange && (_.isArray(weapon.range) === true)) {
             cover = this.coverBonus(attacker, defender);
             modifier += cover;
             attackRoll = this.roll('1d20', modifier);
             damageRoll = this.roll(weapon.damage, attacker.sheet.abilities.dex);
+            damageRoll += attacker.sheet.miscDamageMod;
             
             if (attackRoll >= ac) {
                 console.log(attacker.key + " rolls a " + attackRoll + " vs. AC");
@@ -1252,6 +1315,93 @@ BaseBlitz.Game.prototype = {
         } else {
             console.log("Out of range or no ranged weapon equipped");
         }
+    },
+    
+    priestsShield: function (attacker, defender) {
+        var nextRound = this.round + 1,
+            playerDelayList = [],
+            allyDelayList = [],
+            playerDelay = {
+                'round': nextRound,
+                'method': {}
+            },
+            allyDelay = {
+                'round': nextRound,
+                'method': {}
+            },
+            ac = defender.sheet.defenses.ac,
+            attackerPoint = this.getPoint(attacker),
+            defenderPoint = this.getPoint(defender),
+            weapon = attacker.sheet.slots.mainhand,
+            modifier = attacker.sheet.abilities.str,
+            attackRoll = 0,
+            distance = attackerPoint.distance(defenderPoint, true),
+            damageRoll = this.roll(weapon.damage, attacker.sheet.abilities.str),
+            flankedEnemies = this.flankedEnemies(attacker),
+            ally = {};
+        
+        //weapon proficiency
+        if (_.indexOf(attacker.sheet.weaponProf, weapon.category) !== -1) {
+            modifier += weapon.prof;
+        }
+        
+        //flanking combat advantage
+        if (_.indexOf(flankedEnemies, defender) !== -1) {
+            modifier += 2;
+            console.log("+2 flanking bonus");
+        }
+        
+        //half level bonus
+        modifier += _.floor(attacker.sheet.level / 2);
+        
+        //other attack mods
+        modifier += attacker.sheet.miscAttackMod;
+               
+        attackRoll = this.roll('1d20', modifier);
+        
+        //any misc damage
+        damageRoll += attacker.sheet.miscDamageMod;
+        
+        if (distance <= attacker.sheet.reach && (_.isArray(weapon.range) === false)) {
+            if (attackRoll >= ac) {
+                console.log(attacker.key + " rolls a " + attackRoll + " vs. AC");
+                console.log(attacker.key + " does " + damageRoll + " points of damage");
+                this.hit(defender, damageRoll);
+            } else {
+                console.log(attacker.key + " misses!");
+            }
+        } else {
+            console.log("Out of range or no melee weapon equipped");
+        }        
+        
+        this.currentPlayer.sheet.defenses.ac += 1;
+        console.log(this.currentPlayer.key + " now has an AC of " + this.currentPlayer.sheet.defenses.ac);
+        
+         //functions for end of turn calculations
+        function removePlayerBonus () {
+            this.currentPlayer.sheet.defenses.ac -= 1;
+        }
+        
+        playerDelay.method = removePlayerBonus;        
+        playerDelayList = this.currentPlayer.sheet.metadata.endOfTurn;                
+        playerDelayList.push(playerDelay);
+        
+        //picks the first ally in the list if it exists
+        if (this.adjacentAllies(this.currentPlayer).length > 0) {
+            
+            ally = this.adjacentAllies(this.currentPlayer)[0];
+            console.log(ally);
+            ally.sheet.defenses.ac += 1;
+            
+            function removeAllyBonus () {
+                ally.sheet.defenses.ac -= 1;
+            }
+            
+            allyDelay.method = removeAllyBonus;             
+            playerDelayList.push(allyDelay);
+            
+        }
+
     },
     
     update: function () {
