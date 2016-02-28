@@ -398,8 +398,14 @@ BaseBlitz.Game.prototype = {
         
         //reset actions
         this.currentPlayer.sheet.metadata.actions = [[1,1,1],[1,0,2],[0,2,1],[0,1,2],[0,0,3]];
-        //reset movement
-        this.currentPlayer.sheet.metadata.movement = this.currentPlayer.sheet.speed;
+        
+        //reset movement if not unconcious or other conditions
+        if (this.currentPlayer.sheet.conditions.unconscious === true) {
+            this.currentPlayer.sheet.metadata.movement = 0;
+        } else {
+             //reset movement 
+            this.currentPlayer.sheet.metadata.movement = this.currentPlayer.sheet.speed;
+        }
         
         //display screen text for 4 seconds announcing current player's turn
         message = this.currentPlayer.key + "'s turn!";       
@@ -476,7 +482,9 @@ BaseBlitz.Game.prototype = {
         var lastRound = 0,
             camX = 0,
             camY = 0,
-            text = '';
+            text = {},
+            style = {},
+            message = '';
         
         this.round += 1;
         if (this.round !== 1) {
@@ -564,7 +572,14 @@ BaseBlitz.Game.prototype = {
     moveAction: function () {
         if (this.useAction(this.currentPlayer, "move") === true) {
             console.log(this.currentPlayer.key + " using a move action");
-            this.currentPlayer.sheet.metadata.movement = this.currentPlayer.sheet.speed;
+            
+            if (this.currentPlayer.sheet.conditions.unconscious === true) {
+                this.currentPlayer.sheet.metadata.movement = 0;
+            } else {
+                 //reset movement 
+                this.currentPlayer.sheet.metadata.movement = this.currentPlayer.sheet.speed;
+            }
+            
             this.keyLeft.onDown.add(this.move, this, 0, 'player');
             this.keyRight.onDown.add(this.move, this, 0, 'player');
             this.keyUp.onDown.add(this.move, this, 0, 'player');
@@ -1116,7 +1131,7 @@ BaseBlitz.Game.prototype = {
         } else {
             entity = type;
         }
-
+        
         if (!this.isBlocked(entity, direction) && entity.sheet.metadata.movement > 0) {
             //player can avoid attack of opportunity by shifting through squares
             if (context.shiftKey === true) {
@@ -1186,6 +1201,11 @@ BaseBlitz.Game.prototype = {
         
         for (i = 0; i < adjacentList.length; i += 1) {
             console.log(adjacentList[i].key + " gets an opportunity attack!");
+            
+            //attack if not unconcious or other condition
+            if (adjacentList[i].sheet.conditions.unconscious === false) {
+                this.meleeBasic(adjacentList[i], defender);
+            }
         }
     },
         
@@ -1241,6 +1261,8 @@ BaseBlitz.Game.prototype = {
             console.log(target.key + " is unconscious");
             target.alpha = 0.5;
             target.sheet.conditions.unconscious = true;
+            console.log(target.sheet.conditions.unconscious);
+            target.sheet.metadata.movement = 0;
         } else if (target.sheet.hp <= absoluteHp) {
             console.log(target.key + " is dead");
             this.removePlayer(target);
@@ -1261,6 +1283,22 @@ BaseBlitz.Game.prototype = {
         }        
     },
     
+    attackDisplay: function (attacker, defender, message) {
+        var text = {},
+            style = {};
+        
+        //display screen text for 4 seconds announcing current player's turn
+        style = { font: "24px Arial", fill: "#fffdbb", boundsAlignH: "left", boundsAlignV: "top", stroke: "#000", strokeThickness: 3};        
+        text = this.game.add.text(0, 0, message, style);        
+        text.anchor.setTo(0.5, 0.5);        
+        text.setTextBounds(defender.x + 37, defender.y - 10, 300, 100);
+        this.game.time.events.add(Phaser.Timer.SECOND, textDestroy, this);
+        
+        function textDestroy () {
+            text.destroy();
+        }
+    },
+    
     //computes a melee attack and modifies character sheets
     meleeBasic: function (attacker, defender) {        
         var ac = defender.sheet.defenses.ac,
@@ -1271,7 +1309,8 @@ BaseBlitz.Game.prototype = {
             attackRoll = 0,
             distance = attackerPoint.distance(defenderPoint, true),
             damageRoll = this.roll(weapon.damage, attacker.sheet.abilities.str),
-            flankedEnemies = this.flankedEnemies(attacker);
+            flankedEnemies = this.flankedEnemies(attacker),
+            message = '';
         
         //weapon proficiency
         if (_.indexOf(attacker.sheet.weaponProf, weapon.category) !== -1) {
@@ -1295,13 +1334,16 @@ BaseBlitz.Game.prototype = {
         //any misc damage
         damageRoll += attacker.sheet.miscDamageMod;
         
-        if (distance <= attacker.sheet.reach && (_.isArray(weapon.range) === false)) {
+        if (distance <= attacker.sheet.reach && (_.includes(weapon.category, 'melee'))) {
             if (attackRoll >= ac) {
                 console.log(attacker.key + " rolls a " + attackRoll + " vs. AC");
                 console.log(attacker.key + " does " + damageRoll + " points of damage");
                 this.hit(defender, damageRoll);
+                message = "-" + damageRoll;
+                this.attackDisplay(attacker, defender, message);
             } else {
                 console.log(attacker.key + " misses!");
+                this.attackDisplay(attacker, defender, "miss!");
             }
         } else {
             console.log("Out of range or no melee weapon equipped");
@@ -1321,7 +1363,8 @@ BaseBlitz.Game.prototype = {
             attackRoll = 0,
             damageRoll = 0,
             cover = 0,
-            distance = attackerPoint.distance(defenderPoint, true);
+            distance = attackerPoint.distance(defenderPoint, true),
+            message = '';
         
         //weapon proficiency
         if (_.indexOf(attacker.sheet.weaponProf, weapon.category) !== -1) {
@@ -1346,9 +1389,12 @@ BaseBlitz.Game.prototype = {
             if (attackRoll >= ac) {
                 console.log(attacker.key + " rolls a " + attackRoll + " vs. AC");
                 console.log(attacker.key + " does " + damageRoll + " points of damage");
+                message = "-" + damageRoll;
                 this.hit(defender, damageRoll);
+                this.attackDisplay(attacker, defender, message);
             } else {
                 console.log(attacker.key + " misses!");
+                this.attackDisplay(attacker, defender, "miss!");
             }
         } else {
             console.log("Out of range or no ranged weapon equipped");
@@ -1376,7 +1422,8 @@ BaseBlitz.Game.prototype = {
             distance = attackerPoint.distance(defenderPoint, true),
             damageRoll = this.roll(weapon.damage, attacker.sheet.abilities.str),
             flankedEnemies = this.flankedEnemies(attacker),
-            ally = {};
+            ally = {},
+            message = '';
         
         //weapon proficiency
         if (_.indexOf(attacker.sheet.weaponProf, weapon.category) !== -1) {
@@ -1405,8 +1452,11 @@ BaseBlitz.Game.prototype = {
                 console.log(attacker.key + " rolls a " + attackRoll + " vs. AC");
                 console.log(attacker.key + " does " + damageRoll + " points of damage");
                 this.hit(defender, damageRoll);
+                message = "-" + damageRoll;
+                this.attackDisplay(attacker, defender, message)
             } else {
                 console.log(attacker.key + " misses!");
+                this.attackDisplay(attacker, defender, "miss!");
             }
         } else {
             console.log("Out of range or no melee weapon equipped");
