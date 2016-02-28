@@ -392,11 +392,26 @@ BaseBlitz.Game.prototype = {
     
     //handles the start of a turn
     turnStart: function () {
+        var text = {},
+            style = {},
+            message = '';
+        
+        //reset actions
         this.currentPlayer.sheet.metadata.actions = [[1,1,1],[1,0,2],[0,2,1],[0,1,2],[0,0,3]];
+        //reset movement
         this.currentPlayer.sheet.metadata.movement = this.currentPlayer.sheet.speed;
-        console.log("It is now " + this.currentPlayer.key + "'s turn!");
-        //console.log("special abilities, ongoing damage, regeneration, some effects end");
-        //console.log("++++++++++++");        
+        
+        //display screen text for 4 seconds announcing current player's turn
+        message = this.currentPlayer.key + "'s turn!";       
+        style = { font: "bold 24px Arial", fill: "#fffdbb", boundsAlignH: "left", boundsAlignV: "top", stroke: "#000", strokeThickness: 3 };        
+        text = this.game.add.text(0, 0, message, style);        
+        text.anchor.setTo(0.5, 0.5);        
+        text.setTextBounds(this.currentPlayer.x + 37, this.currentPlayer.y - 10, 300, 100);
+        this.game.time.events.add(Phaser.Timer.SECOND * 4, textDestroy, this);
+        
+        function textDestroy () {
+            text.destroy();
+        }
     },
     
     //handles end of turn and disabling movement controls
@@ -437,34 +452,52 @@ BaseBlitz.Game.prototype = {
         //a list of all the delayed methods that run on specific rounds determined by the power
         delayList = this.currentPlayer.sheet.metadata.endOfTurn;
         
-        //TODO: remove method from delayList if saving throw made
-        console.log(this.currentPlayer.key + " can make a saving throw");        
-        
         //check each delay object in list. If it's the current round, execute the action 
         if (delayList.length > 0) {
             for (j = 0; j < delayList.length; j += 1) {
-                round = delayList[j].round;
+                round = delayList[j].round;                
                 if (round === this.round) {
                     action = delayList[j].method;
                     //execute the method in this context
-                    action.call(this);
+                    action.call(this);                    
+                } else if (round < this.round) {
                     //remove the method from the endOfTurn list
-                    //_.pull(delayList, delayList[j]);
+                    _.pull(delayList, delayList[j]);
+                    j -= 1;
                 }
             }
         }
-        console.log(this.currentPlayer.sheet.defenses.ac);
         
         this.switchPlayer();
     },
     
     //handles start of round
     roundStart: function () {
-        var lastRound = 0;
+        var lastRound = 0,
+            camX = 0,
+            camY = 0,
+            text = '';
+        
         this.round += 1;
         if (this.round !== 1) {
-            lastRound = this.round - 1;
-            console.log("End of round " + lastRound + " effects.");
+            lastRound = this.round - 1;            
+        }       
+        
+        //update camera to make sure current player is focused on for text alignment
+        this.game.camera.focusOn(this.currentPlayer);
+        
+        //display round number message
+        message = "ROUND " + this.round;       
+        style = { font: "bold 48px Arial", fill: "#ff0000", boundsAlignH: "center", boundsAlignV: "middle", stroke: "#000", strokeThickness: 4 };
+        camX = (this.game.camera.width / 2) + this.game.camera.view.x;
+        camY = (this.game.camera.height / 2) + this.game.camera.view.y;
+        text = this.game.add.text(camX, camY, message, style);
+        text.anchor.setTo(0.5, 0.5);
+
+        this.game.time.events.add(Phaser.Timer.SECOND * 3, textDestroy, this);
+        
+        function textDestroy () {
+            text.destroy();
         }
         
         console.log("It is now Round " + this.round);
@@ -1160,12 +1193,13 @@ BaseBlitz.Game.prototype = {
     switchPlayer: function () {
         var position = this.initOrder.indexOf(this.currentPlayer),
             nextPosition = 0,
-            nextPlayer = {};
+            nextPlayer = {},
+            newRound = false;
         
         //loop around initiative
         if (position === this.initOrder.length - 1) {
             nextPosition = 0;
-            this.newRound.dispatch();
+            newRound = true;
         } else {
             nextPosition = position + 1;
         }
@@ -1174,6 +1208,10 @@ BaseBlitz.Game.prototype = {
         this.currentPlayer = nextPlayer;
         this.game.world.bringToTop(this.currentPlayer);        
         this.newTurn.dispatch();
+        
+        if (newRound === true) {
+            this.newRound.dispatch();
+        }
     },
     
     //returns the result of specified dice roll
