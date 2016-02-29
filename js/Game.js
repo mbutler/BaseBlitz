@@ -98,6 +98,16 @@ BaseBlitz.Game.prototype = {
         
         this.currentPlayer = this.initOrder[0];
         this.game.world.bringToTop(this.currentPlayer);
+        
+        //dialog box
+        this.dialog = this.game.add.sprite(400, 100, 'dialog');
+        this.dialogBox = this.game.add.group();
+        this.dialogBox.add(this.dialog);
+        this.dialog.inputEnabled = true;
+        this.dialog.input.enableDrag(true);
+        this.dialog.visible = false;
+          
+        //start the round and turn
         this.newRound.dispatch();
         this.newTurn.dispatch();
         ////////////////////////////////////////////////////////////////
@@ -132,6 +142,7 @@ BaseBlitz.Game.prototype = {
         this.keyL = this.game.input.keyboard.addKey(Phaser.KeyCode.L);
         
         this.keyEnter = this.game.input.keyboard.addKey(Phaser.KeyCode.ENTER);
+        this.keyTab = this.game.input.keyboard.addKey(Phaser.KeyCode.TAB);
                   
         this.keyD.onDown.add(this.debug, this);
         this.keyE.onDown.add(this.turnEnd, this);
@@ -140,6 +151,7 @@ BaseBlitz.Game.prototype = {
         this.keyV.onDown.add(this.moveAction, this);
         
         this.keyEnter.onDown.add(this.confirm, this);
+        this.keyTab.onDown.add(this.displayInfo, this);
         
             
     },
@@ -158,19 +170,40 @@ BaseBlitz.Game.prototype = {
 
     },
     
+    displayInfo: function () {
+        
+/*        if (this.dialog.visible === true) {
+            this.dialog.visible = false;
+        } else {
+            this.dialog.visible = true;
+        }*/
+        alert (this.currentPlayer.key + '\n' +
+              "AC: " + this.currentPlayer.sheet.defenses.ac + '\n' +
+               "Weapon: " + this.currentPlayer.sheet.slots.mainhand.damage
+              
+              );
+        
+        
+    },
+    
     //destroys a sprite and removes it from initiative, player list, and appropriate team
-    removePlayer: function (player) {
-        player.destroy();
+    removePlayer: function (player) { 
+        var entity = this.entityType(player);
         _.pull(this.initOrder, player);
         _.pull(this.players, player);
-        
-        if (this.entityType(player) === "hero") {
+        console.log(this.players);
+                
+        if (entity === "hero") {
             _.pull(this.heroes, player);
-        } else if (this.entityType(player) === "monster") {
+        } else if (entity === "monster") {
             _.pull(this.monsters, player);
+            console.log(this.monsters);
         }
         
-        this.switchPlayer();
+        //destroy player after removing from lists
+        player.destroy();
+        
+        //this.switchPlayer();
     },
     
     //returns the attack modifier based on calculated cover
@@ -520,7 +553,7 @@ BaseBlitz.Game.prototype = {
             output = '',
             selection = '',
             power = {},
-            weapon = this.currentPlayer.sheet.slots.mainhand;             
+            weapon = this.currentPlayer.sheet.slots.mainhand; 
         
         //get all the names of the powers in the standard action list
         names = _.mapValues(this.standard, 'name');
@@ -544,6 +577,7 @@ BaseBlitz.Game.prototype = {
         if (attack != null) {
             if (this.useAction(this.currentPlayer, "standard") === true) {
                 console.log(this.currentPlayer.key + " using a standard action");
+                this.messageDisplay('', this.currentPlayer, "standard action");
                 this.currentPlayer.sheet.metadata.lastaction.power = power[0];
                 
                 //only use attack method if the power is an attack
@@ -553,31 +587,37 @@ BaseBlitz.Game.prototype = {
                 
             } else {
                 console.log("No standard actions available");
+                this.messageDisplay('', this.currentPlayer, "out of standard actions");
             }
         } else {
             console.log("Attack type not available");
+            this.messageDisplay('', this.currentPlayer, "not available");
         }
     },
     
     //handles taking minor action
     minorAction: function () {
         if (this.useAction(this.currentPlayer, "minor") === true) {
+            this.messageDisplay('', this.currentPlayer, "Minor Action");
             console.log(this.currentPlayer.key + " using a minor action");
         } else {
             console.log("Choose another action");
+            this.messageDisplay('', this.currentPlayer, "out of minor actions");
         }
     },
     
     //handles move action and turning on movement keys
     moveAction: function () {
         if (this.useAction(this.currentPlayer, "move") === true) {
-            console.log(this.currentPlayer.key + " using a move action");
             
+            console.log(this.currentPlayer.key + " using a move action");
+                        
             if (this.currentPlayer.sheet.conditions.unconscious === true) {
                 this.currentPlayer.sheet.metadata.movement = 0;
             } else {
                  //reset movement 
                 this.currentPlayer.sheet.metadata.movement = this.currentPlayer.sheet.speed;
+                this.messageDisplay('', this.currentPlayer, "move action");
             }
             
             this.keyLeft.onDown.add(this.move, this, 0, 'player');
@@ -602,6 +642,7 @@ BaseBlitz.Game.prototype = {
             this.keyL.onDown.add(this.move, this, 0, 'player');
         } else {
             console.log("Choose another action");
+            this.messageDisplay('', this.currentPlayer, "out of move actions");
         }
         //this.move();
     },    
@@ -1283,7 +1324,7 @@ BaseBlitz.Game.prototype = {
         }        
     },
     
-    attackDisplay: function (attacker, defender, message) {
+    messageDisplay: function (attacker, defender, message) {
         var text = {},
             style = {};
         
@@ -1340,10 +1381,10 @@ BaseBlitz.Game.prototype = {
                 console.log(attacker.key + " does " + damageRoll + " points of damage");
                 this.hit(defender, damageRoll);
                 message = "-" + damageRoll;
-                this.attackDisplay(attacker, defender, message);
+                this.messageDisplay(attacker, defender, message);
             } else {
                 console.log(attacker.key + " misses!");
-                this.attackDisplay(attacker, defender, "miss!");
+                this.messageDisplay(attacker, defender, "miss!");
             }
         } else {
             console.log("Out of range or no melee weapon equipped");
@@ -1391,10 +1432,10 @@ BaseBlitz.Game.prototype = {
                 console.log(attacker.key + " does " + damageRoll + " points of damage");
                 message = "-" + damageRoll;
                 this.hit(defender, damageRoll);
-                this.attackDisplay(attacker, defender, message);
+                this.messageDisplay(attacker, defender, message);
             } else {
                 console.log(attacker.key + " misses!");
-                this.attackDisplay(attacker, defender, "miss!");
+                this.messageDisplay(attacker, defender, "miss!");
             }
         } else {
             console.log("Out of range or no ranged weapon equipped");
@@ -1453,10 +1494,10 @@ BaseBlitz.Game.prototype = {
                 console.log(attacker.key + " does " + damageRoll + " points of damage");
                 this.hit(defender, damageRoll);
                 message = "-" + damageRoll;
-                this.attackDisplay(attacker, defender, message)
+                this.messageDisplay(attacker, defender, message)
             } else {
                 console.log(attacker.key + " misses!");
-                this.attackDisplay(attacker, defender, "miss!");
+                this.messageDisplay(attacker, defender, "miss!");
             }
         } else {
             console.log("Out of range or no melee weapon equipped");

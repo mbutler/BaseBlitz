@@ -12,6 +12,7 @@ BaseBlitz.Preload.prototype = {
         this.load.image('8x3-stone', '/images/8x3-stone.png');
         this.load.image('statue', 'images/statue.png');
         this.load.image('trapdoor', 'images/trapdoor.png');
+        this.load.image('dialog', 'images/dialog.png');
         
         this.load.image('jingleboots', 'images/jingleboots.png');
         this.load.image('rattlesocks', 'images/rattlesocks.png');
@@ -21,7 +22,8 @@ BaseBlitz.Preload.prototype = {
         this.load.image('spider', 'images/spider.png');
         this.load.image('fungus', 'images/fungus.png');
         this.load.image('golem', 'images/golem.png');
-        this.load.image('blindheim', 'images/blindheim.png');        
+        this.load.image('blindheim', 'images/blindheim.png');  
+        
     },
     create: function () {        
         this.state.start('Game');
