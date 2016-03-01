@@ -14,15 +14,15 @@ BaseBlitz.Preload.prototype = {
         this.load.image('trapdoor', 'images/trapdoor.png');
         this.load.image('blackbar', 'images/blackbar.png');
         
-        this.load.image('jingleboots', 'images/jingleboots.png');
-        this.load.image('rattlesocks', 'images/rattlesocks.png');
-        this.load.image('scoopercram', 'images/scoopercram.png');
-        this.load.image('jumperstomp', 'images/jumperstomp.png');
+        this.load.image('Jingleboots', 'images/jingleboots.png');
+        this.load.image('Rattlesocks', 'images/rattlesocks.png');
+        this.load.image('Scoopercram', 'images/scoopercram.png');
+        this.load.image('Jumperstomp', 'images/jumperstomp.png');
         
-        this.load.image('spider', 'images/spider.png');
-        this.load.image('fungus', 'images/fungus.png');
-        this.load.image('golem', 'images/golem.png');
-        this.load.image('blindheim', 'images/blindheim.png');  
+        this.load.image('Spider', 'images/spider.png');
+        this.load.image('Fungus', 'images/fungus.png');
+        this.load.image('Golem', 'images/golem.png');
+        this.load.image('Blindheim', 'images/blindheim.png');  
         
     },
     create: function () {        

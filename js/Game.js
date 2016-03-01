@@ -15,6 +15,7 @@ BaseBlitz.Game.prototype = {
         
         //create tilemap and set up layers
         this.map = this.game.add.tilemap('map1');
+        console.log(this.map.width);
         this.map.addTilesetImage('8x3-stone', '8x3-stone');
         this.backgroundlayer = this.map.createLayer('backgroundLayer');
         this.backgroundlayer.resizeWorld();
@@ -33,31 +34,31 @@ BaseBlitz.Game.prototype = {
         this.round = 0;
     
         //heroes
-        this.hero1 = this.game.add.sprite(75 * 1, 75 * 1, 'jingleboots');
+        this.hero1 = this.game.add.sprite(75 * 1, 75 * 1, 'Jingleboots');
         this.hero1.sheet = _.cloneDeep(pregen1);
         this.hero1.sheet.slots.mainhand = _.clone(weapons.greataxe);
-        this.hero2 = this.game.add.sprite(75 * 1, 75 * 3, 'rattlesocks');
+        this.hero2 = this.game.add.sprite(75 * 1, 75 * 3, 'Rattlesocks');
         this.hero2.sheet = _.cloneDeep(pregen1);
         this.hero2.sheet.slots.mainhand = _.clone(weapons.greataxe);
-        this.hero3 = this.game.add.sprite(75 * 2, 75 * 2, 'scoopercram');
+        this.hero3 = this.game.add.sprite(75 * 2, 75 * 2, 'Scoopercram');
         this.hero3.sheet = _.cloneDeep(pregen1);
         this.hero3.sheet.slots.mainhand = _.clone(weapons.greataxe);
-        this.hero4 = this.game.add.sprite(75 * 3, 75 * 3, 'jumperstomp');
+        this.hero4 = this.game.add.sprite(75 * 3, 75 * 3, 'Jumperstomp');
         this.hero4.sheet = _.cloneDeep(pregen1);
         this.hero4.sheet.slots.mainhand = _.clone(weapons.greataxe);
         this.heroes = [this.hero1, this.hero2, this.hero3, this.hero4];
         
         //monsters
-        this.monster1 = this.game.add.sprite(75 * 6, 75 * 9, 'spider');
+        this.monster1 = this.game.add.sprite(75 * 6, 75 * 9, 'Spider');
         this.monster1.sheet = _.cloneDeep(pregen2);
         this.monster1.sheet.slots.mainhand = _.clone(weapons.dagger);
-        this.monster2 = this.game.add.sprite(75 * 8, 75 * 8, 'golem');
+        this.monster2 = this.game.add.sprite(75 * 8, 75 * 8, 'Golem');
         this.monster2.sheet = _.cloneDeep(pregen2);
         this.monster2.sheet.slots.mainhand = _.clone(weapons.club);
-        this.monster3 = this.game.add.sprite(75 * 9, 75 * 9, 'fungus');
+        this.monster3 = this.game.add.sprite(75 * 9, 75 * 9, 'Fungus');
         this.monster3.sheet = _.cloneDeep(pregen2);
         this.monster3.sheet.slots.mainhand = _.clone(weapons.greataxe);
-        this.monster4 = this.game.add.sprite(75 * 6, 75 * 7, 'blindheim');
+        this.monster4 = this.game.add.sprite(75 * 6, 75 * 7, 'Blindheim');
         this.monster4.sheet = _.cloneDeep(pregen2);
         this.monster4.sheet.slots.mainhand = _.clone(weapons.crossbow);
         this.monsters = [this.monster1, this.monster2, this.monster3, this.monster4];  
@@ -106,6 +107,7 @@ BaseBlitz.Game.prototype = {
         this.barGroup = this.game.add.group();
         this.barGroup.add(this.blackbar);
         this.barGroup.fixedToCamera = true;
+        this.blackbar.width = this.game.camera.width;
         
         //display screen text for 4 seconds announcing current player's turn
         this.HUDNameStyle = { font: "24px Courier", fill: "#00ff00", boundsAlignH: "left", boundsAlignV: "top"};
@@ -447,7 +449,8 @@ BaseBlitz.Game.prototype = {
         }
         
         //display screen text for 4 seconds announcing current player's turn
-        message = this.currentPlayer.key + "'s turn!";       
+        message = this.currentPlayer.key + "'s turn!";
+        this.messageLog(message);
         style = { font: "bold 24px Arial", fill: "#fffdbb", boundsAlignH: "left", boundsAlignV: "top", stroke: "#000", strokeThickness: 3 };        
         text = this.game.add.text(0, 0, message, style);        
         text.anchor.setTo(0.5, 0.5);        
@@ -534,7 +537,8 @@ BaseBlitz.Game.prototype = {
         this.game.camera.focusOn(this.currentPlayer);
         
         //display round number message
-        message = "ROUND " + this.round;       
+        message = "ROUND " + this.round;
+        this.messageLog(message);
         style = { font: "bold 48px Arial", fill: "#ff0000", boundsAlignH: "center", boundsAlignV: "middle", stroke: "#000", strokeThickness: 4 };
         camX = (this.game.camera.width / 2) + this.game.camera.view.x;
         camY = (this.game.camera.height / 2) + this.game.camera.view.y;
@@ -545,9 +549,7 @@ BaseBlitz.Game.prototype = {
         
         function textDestroy () {
             text.destroy();
-        }
-        
-        this.messageLog("It is now Round " + this.round);
+        }        
     },
     
     //handles taking standard action
@@ -582,9 +584,9 @@ BaseBlitz.Game.prototype = {
         //use the action and update character sheet with last action. make sure attack and weapon 
         if (attack != null) {
             if (this.useAction(this.currentPlayer, "standard") === true) {
-                console.log(this.currentPlayer.key + " using a standard action");
-                this.messageLog(this.currentPlayer.key + " using a standard action");
-                this.messageDisplay('', this.currentPlayer, "standard action");
+                console.log(this.currentPlayer.key + " uses " + power[0].name);
+                this.messageLog(this.currentPlayer.key + " uses " + power[0].name);
+                this.messageDisplay('', this.currentPlayer, power[0].name);
                 this.currentPlayer.sheet.metadata.lastaction.power = power[0];
                 
                 //only use attack method if the power is an attack
@@ -838,8 +840,7 @@ BaseBlitz.Game.prototype = {
                 for (j = 0; j < this.heroes.length; j += 1) {
                     allyPoint = this.getPoint(this.heroes[j]);
                     if (allyPoint.equals(flankPoint)) {
-                        console.log("flanking " + adjacentList[i].key);
-                        this.messageLog("flanking " + adjacentList[i].key);
+                        console.log("flanking " + adjacentList[i].key);                        
                         flankedList.push(adjacentList[i]);
                     }
                 }
@@ -847,8 +848,7 @@ BaseBlitz.Game.prototype = {
                 for (k = 0; k < this.monsters.length; k += 1) {
                     allyPoint = this.getPoint(this.monsters[k]);
                     if (allyPoint.equals(flankPoint)) {
-                        console.log("flanking " + adjacentList[i].key);
-                        this.messageLog("flanking " + adjacentList[i].key);
+                        console.log("flanking " + adjacentList[i].key);                        
                         flankedList.push(adjacentList[i]);
                     }
                 }
@@ -1380,7 +1380,7 @@ BaseBlitz.Game.prototype = {
         if (_.indexOf(flankedEnemies, defender) !== -1) {
             modifier += 2;
             console.log("+2 flanking bonus");
-            this.messageLog.log("+2 flanking bonus");
+            this.messageLog(defender.key + " is flanked");
         }
         
         //half level bonus
@@ -1405,7 +1405,7 @@ BaseBlitz.Game.prototype = {
                 this.messageDisplay(attacker, defender, message);
             } else {
                 console.log(attacker.key + " misses!");
-                this.messageLog(attacker.key + " misses!");
+                this.messageLog(attacker.key + " rolls a " + attackRoll + " and misses!");
                 this.messageDisplay(attacker, defender, "miss!");
             }
         } else {
@@ -1438,6 +1438,7 @@ BaseBlitz.Game.prototype = {
         //long range
         if (distance > shortRange && distance <= longRange) {
             modifier += -2;
+            this.messageLog(defender.key + " is at long range");
         }
         
         //other attack mods
@@ -1450,9 +1451,17 @@ BaseBlitz.Game.prototype = {
             damageRoll = this.roll(weapon.damage, attacker.sheet.abilities.dex);
             damageRoll += attacker.sheet.miscDamageMod;
             
+            if (cover === -2) {
+                this.messageLog(defender.key + " has cover");
+            } else if (cover === -5) {
+                this.messageLog(defender.key + " has superior cover");
+            }
+            
+            
+            
             if (attackRoll >= ac) {
                 console.log(attacker.key + " rolls a " + attackRoll + " vs. AC");
-                console.log(attacker.key + " does " + damageRoll + " points of damage");
+                console.log(attacker.key + " does " + damageRoll + " points of damage");                
                 this.messageLog(attacker.key + " rolls a " + attackRoll + " vs. AC");
                 this.messageLog(attacker.key + " does " + damageRoll + " points of damage");
                 message = "-" + damageRoll;
@@ -1460,7 +1469,7 @@ BaseBlitz.Game.prototype = {
                 this.messageDisplay(attacker, defender, message);
             } else {
                 console.log(attacker.key + " misses!");
-                this.messageLog(attacker.key + " misses!");
+                this.messageLog(attacker.key + " rolls a " + attackRoll + " and misses");
                 this.messageDisplay(attacker, defender, "miss!");
             }
         } else {
@@ -1501,7 +1510,7 @@ BaseBlitz.Game.prototype = {
         if (_.indexOf(flankedEnemies, defender) !== -1) {
             modifier += 2;
             console.log("+2 flanking bonus");
-            this.messageLog("+2 flanking bonus");
+            this.messageLog(defender.key + " is flanked");
         }
         
         //half level bonus
