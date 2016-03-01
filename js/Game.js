@@ -108,9 +108,9 @@ BaseBlitz.Game.prototype = {
         this.barGroup.fixedToCamera = true;
         
         //display screen text for 4 seconds announcing current player's turn
-        this.HUDNameStyle = { font: "24px Courier", fill: "#fffdbb", boundsAlignH: "left", boundsAlignV: "top"};
-        this.HUDTextStyle = { font: "12px Courier", fill: "#fffdbb", boundsAlignH: "left", boundsAlignV: "top"};
-        this.HUDMessageStyle = { font: "12px Courier", fill: "#fffdbb", boundsAlignH: "right", boundsAlignV: "bottom", wordWrap: true, wordWrapWidth: 300};
+        this.HUDNameStyle = { font: "24px Courier", fill: "#00ff00", boundsAlignH: "left", boundsAlignV: "top"};
+        this.HUDTextStyle = { font: "12px Courier", fill: "#00ff00", boundsAlignH: "left", boundsAlignV: "top"};
+        this.HUDMessageStyle = { font: "12px Courier", fill: "#00ff00", boundsAlignH: "right", boundsAlignV: "bottom", wordWrap: true, wordWrapWidth: 300};
         
         this.HUDNameText = this.game.add.text(0, 0, this.currentPlayer.key, this.HUDNameStyle);        
         this.HUDNameText.setTextBounds(this.blackbar.x + 5, this.blackbar.y + 5, 100, 100);
