@@ -12,7 +12,7 @@ BaseBlitz.Preload.prototype = {
         this.load.image('8x3-stone', '/images/8x3-stone.png');
         this.load.image('statue', 'images/statue.png');
         this.load.image('trapdoor', 'images/trapdoor.png');
-        this.load.image('dialog', 'images/dialog.png');
+        this.load.image('blackbar', 'images/blackbar.png');
         
         this.load.image('jingleboots', 'images/jingleboots.png');
         this.load.image('rattlesocks', 'images/rattlesocks.png');

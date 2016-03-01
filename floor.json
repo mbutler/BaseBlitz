@@ -121,8 +121,8 @@
          "columns":1,
          "firstgid":16,
          "image":"images\/player.png",
-         "imageheight":65,
-         "imagewidth":65,
+         "imageheight":75,
+         "imagewidth":75,
          "margin":0,
          "name":"player",
          "properties":

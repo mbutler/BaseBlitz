@@ -64,6 +64,8 @@ BaseBlitz.Game.prototype = {
         
         //reduce heroes and monsters into list of all players
         this.players = _.concat(this.heroes, this.monsters);
+        this.playerGroup = this.game.add.group();
+        //this.playerGroup.add(this.hero1, this.hero2, this.hero3, this.hero4, this.monster1, this.monster2, this.monster3, this.monster4);
         
         this.standard = {
             meleeBasic: {
@@ -100,12 +102,30 @@ BaseBlitz.Game.prototype = {
         this.game.world.bringToTop(this.currentPlayer);
         
         //dialog box
-        this.dialog = this.game.add.sprite(400, 100, 'dialog');
-        this.dialogBox = this.game.add.group();
-        this.dialogBox.add(this.dialog);
-        this.dialog.inputEnabled = true;
-        this.dialog.input.enableDrag(true);
-        this.dialog.visible = false;
+        this.blackbar = this.game.add.sprite(0, this.game.camera.height - 75, 'blackbar');
+        this.barGroup = this.game.add.group();
+        this.barGroup.add(this.blackbar);
+        this.barGroup.fixedToCamera = true;
+        
+        //display screen text for 4 seconds announcing current player's turn
+        this.HUDNameStyle = { font: "24px Courier", fill: "#fffdbb", boundsAlignH: "left", boundsAlignV: "top"};
+        this.HUDTextStyle = { font: "12px Courier", fill: "#fffdbb", boundsAlignH: "left", boundsAlignV: "top"};
+        this.HUDMessageStyle = { font: "12px Courier", fill: "#fffdbb", boundsAlignH: "right", boundsAlignV: "bottom", wordWrap: true, wordWrapWidth: 300};
+        
+        this.HUDNameText = this.game.add.text(0, 0, this.currentPlayer.key, this.HUDNameStyle);        
+        this.HUDNameText.setTextBounds(this.blackbar.x + 5, this.blackbar.y + 5, 100, 100);
+        
+        this.HUDWeaponText = this.game.add.text(0, 0, this.currentPlayer.sheet.slots.mainhand.name, this.HUDTextStyle);
+        this.HUDWeaponText.setTextBounds(this.blackbar.x + 5, this.blackbar.y + 30, 100, 100);
+        
+        this.HUDMessageText = this.game.add.text(0, 0, 'fight!', this.HUDMessageStyle);
+        this.HUDMessageText.setTextBounds(this.game.camera.width - 305, this.blackbar.y, 300, 75);
+        this.HUDMessageList = ['', '', '', ''];
+        
+        this.barGroup.add(this.HUDNameText)
+        this.barGroup.add(this.HUDWeaponText);
+        this.barGroup.add(this.HUDMessageText);
+        //this.game.time.events.add(Phaser.Timer.SECOND, textDestroy, this);
           
         //start the round and turn
         this.newRound.dispatch();
@@ -142,8 +162,7 @@ BaseBlitz.Game.prototype = {
         this.keyL = this.game.input.keyboard.addKey(Phaser.KeyCode.L);
         
         this.keyEnter = this.game.input.keyboard.addKey(Phaser.KeyCode.ENTER);
-        this.keyTab = this.game.input.keyboard.addKey(Phaser.KeyCode.TAB);
-                  
+                          
         this.keyD.onDown.add(this.debug, this);
         this.keyE.onDown.add(this.turnEnd, this);
         this.keyS.onDown.add(this.standardAction, this);
@@ -151,39 +170,26 @@ BaseBlitz.Game.prototype = {
         this.keyV.onDown.add(this.moveAction, this);
         
         this.keyEnter.onDown.add(this.confirm, this);
-        this.keyTab.onDown.add(this.displayInfo, this);
-        
-            
-    },
+            },
     
     //varous testing things
     debug: function () {
-        
-              
         console.log(this.adjacentAllies(this.currentPlayer));
-        //var power = this.powers.rangedBasic.function;
-        //this.meleeBasic(this.currentPlayer, this.monster2);
-        //power.call(this, this.currentPlayer, this.monster2);
-        //var test = _.pick(weapons)
-        //var target = this.target(this.currentPlayer, 'ranged');
-        //console.log(this.currentPlayer.sheet.metadata.lastaction.target);
-
     },
     
-    displayInfo: function () {
+    //sets the character info in the HUD
+    hudUpdate: function () {
+        this.HUDNameText.setText(this.currentPlayer.key);
+        this.HUDWeaponText.setText(this.currentPlayer.sheet.slots.mainhand.name);
+    },
+    
+    //displays the message log window
+    messageLog: function (message) {
+        var line = [];
+        this.HUDMessageList.push(message);
+        line = _.takeRight(this.HUDMessageList, 4);
         
-/*        if (this.dialog.visible === true) {
-            this.dialog.visible = false;
-        } else {
-            this.dialog.visible = true;
-        }*/
-        alert (this.currentPlayer.key + '\n' +
-              "AC: " + this.currentPlayer.sheet.defenses.ac + '\n' +
-               "Weapon: " + this.currentPlayer.sheet.slots.mainhand.damage
-              
-              );
-        
-        
+        this.HUDMessageText.setText(line[0] + '\n' + line[1] + '\n' + line[2] + '\n' + line[3]);
     },
     
     //destroys a sprite and removes it from initiative, player list, and appropriate team
@@ -541,7 +547,7 @@ BaseBlitz.Game.prototype = {
             text.destroy();
         }
         
-        console.log("It is now Round " + this.round);
+        this.messageLog("It is now Round " + this.round);
     },
     
     //handles taking standard action
@@ -577,6 +583,7 @@ BaseBlitz.Game.prototype = {
         if (attack != null) {
             if (this.useAction(this.currentPlayer, "standard") === true) {
                 console.log(this.currentPlayer.key + " using a standard action");
+                this.messageLog(this.currentPlayer.key + " using a standard action");
                 this.messageDisplay('', this.currentPlayer, "standard action");
                 this.currentPlayer.sheet.metadata.lastaction.power = power[0];
                 
@@ -587,10 +594,12 @@ BaseBlitz.Game.prototype = {
                 
             } else {
                 console.log("No standard actions available");
+                this.messageLog("No standard actions available");
                 this.messageDisplay('', this.currentPlayer, "out of standard actions");
             }
         } else {
             console.log("Attack type not available");
+            this.messageLog("Attack type not available");
             this.messageDisplay('', this.currentPlayer, "not available");
         }
     },
@@ -642,6 +651,7 @@ BaseBlitz.Game.prototype = {
             this.keyL.onDown.add(this.move, this, 0, 'player');
         } else {
             console.log("Choose another action");
+            this.messageLog("Choose another action");
             this.messageDisplay('', this.currentPlayer, "out of move actions");
         }
         //this.move();
@@ -710,6 +720,7 @@ BaseBlitz.Game.prototype = {
             power.method.call(this, this.currentPlayer, target);            
         } else {
             console.log("No action available");
+            this.messageLog("No action available");
         }
         
         
@@ -828,6 +839,7 @@ BaseBlitz.Game.prototype = {
                     allyPoint = this.getPoint(this.heroes[j]);
                     if (allyPoint.equals(flankPoint)) {
                         console.log("flanking " + adjacentList[i].key);
+                        this.messageLog("flanking " + adjacentList[i].key);
                         flankedList.push(adjacentList[i]);
                     }
                 }
@@ -836,6 +848,7 @@ BaseBlitz.Game.prototype = {
                     allyPoint = this.getPoint(this.monsters[k]);
                     if (allyPoint.equals(flankPoint)) {
                         console.log("flanking " + adjacentList[i].key);
+                        this.messageLog("flanking " + adjacentList[i].key);
                         flankedList.push(adjacentList[i]);
                     }
                 }
@@ -1189,46 +1202,46 @@ BaseBlitz.Game.prototype = {
             switch (direction) {
             case 'W':
                 entity.x -= this.map.tileWidth;
-                console.log(entity.key + " " + moveType + " west");
+                this.messageLog(entity.key + " " + moveType + " west");
                 //this.flankedEnemies(entity);
                 break;
             case 'E':
                 entity.x += this.map.tileWidth;
-                console.log(entity.key + " " + moveType + " east");
+                this.messageLog(entity.key + " " + moveType + " east");
                 //this.flankedEnemies(entity);
                 break;
             case 'N':
                 entity.y -= this.map.tileWidth;
-                console.log(entity.key + " " + moveType + " north");
+                this.messageLog(entity.key + " " + moveType + " north");
                 //this.flankedEnemies(entity);
                 break;
             case 'S':
                 entity.y += this.map.tileWidth;
-                console.log(entity.key + " " + moveType + " south");
+                this.messageLog(entity.key + " " + moveType + " south");
                 //this.flankedEnemies(entity);
                 break;
             case 'NW':
                 entity.x -= this.map.tileWidth;
                 entity.y -= this.map.tileWidth;
-                console.log(entity.key + " " + moveType + " northwest");
+                this.messageLog(entity.key + " " + moveType + " northwest");
                 //this.flankedEnemies(entity);
                 break;
             case 'SW':
                 entity.x -= this.map.tileWidth;
                 entity.y += this.map.tileWidth;
-                console.log(entity.key + " " + moveType + " southwest");
+                this.messageLog(entity.key + " " + moveType + " southwest");
                 //this.flankedEnemies(entity);
                 break;
             case 'SE':
                 entity.x += this.map.tileWidth;
                 entity.y += this.map.tileWidth;
-                console.log(entity.key + " " + moveType + " southeast");
+                this.messageLog(entity.key + " " + moveType + " southeast");
                 //this.flankedEnemies(entity);
                 break;
             case 'NE':
                 entity.x += this.map.tileWidth;
                 entity.y -= this.map.tileWidth;
-                console.log(entity.key + " " + moveType + " northeast");
+                this.messageLog(entity.key + " " + moveType + " northeast");
                 //this.flankedEnemies(entity);
                 break;
             }
@@ -1242,6 +1255,7 @@ BaseBlitz.Game.prototype = {
         
         for (i = 0; i < adjacentList.length; i += 1) {
             console.log(adjacentList[i].key + " gets an opportunity attack!");
+            this.messageLog(adjacentList[i].key + " gets an opportunity attack!");
             
             //attack if not unconcious or other condition
             if (adjacentList[i].sheet.conditions.unconscious === false) {
@@ -1267,7 +1281,9 @@ BaseBlitz.Game.prototype = {
         
         nextPlayer = this.initOrder[nextPosition];
         this.currentPlayer = nextPlayer;
-        this.game.world.bringToTop(this.currentPlayer);        
+        this.hudUpdate();
+        this.game.world.bringToTop(this.barGroup);
+        this.game.world.bringToTop(this.currentPlayer);
         this.newTurn.dispatch();
         
         if (newRound === true) {
@@ -1296,16 +1312,18 @@ BaseBlitz.Game.prototype = {
         if (target.sheet.hp <= bloodied && target.sheet.hp >= 0) {
             //make bloodied
             console.log(target.key + " is bloodied");
+            this.messageLog(target.key + " is bloodied");
             target.sheet.conditions.bloodied = true;
         } else if (target.sheet.hp <= 0 && target.sheet.hp >= absoluteHp) {
             //make unconscious
             console.log(target.key + " is unconscious");
+            this.messageLog(target.key + " is unconscious");
             target.alpha = 0.5;
-            target.sheet.conditions.unconscious = true;
-            console.log(target.sheet.conditions.unconscious);
+            target.sheet.conditions.unconscious = true;            
             target.sheet.metadata.movement = 0;
         } else if (target.sheet.hp <= absoluteHp) {
             console.log(target.key + " is dead");
+            this.messageLog(target.key + " is dead");
             this.removePlayer(target);
         }
     },
@@ -1362,6 +1380,7 @@ BaseBlitz.Game.prototype = {
         if (_.indexOf(flankedEnemies, defender) !== -1) {
             modifier += 2;
             console.log("+2 flanking bonus");
+            this.messageLog.log("+2 flanking bonus");
         }
         
         //half level bonus
@@ -1378,16 +1397,20 @@ BaseBlitz.Game.prototype = {
         if (distance <= attacker.sheet.reach && (_.includes(weapon.category, 'melee'))) {
             if (attackRoll >= ac) {
                 console.log(attacker.key + " rolls a " + attackRoll + " vs. AC");
+                this.messageLog(attacker.key + " rolls a " + attackRoll + " vs. AC");
                 console.log(attacker.key + " does " + damageRoll + " points of damage");
+                this.messageLog(attacker.key + " does " + damageRoll + " points of damage");
                 this.hit(defender, damageRoll);
                 message = "-" + damageRoll;
                 this.messageDisplay(attacker, defender, message);
             } else {
                 console.log(attacker.key + " misses!");
+                this.messageLog(attacker.key + " misses!");
                 this.messageDisplay(attacker, defender, "miss!");
             }
         } else {
             console.log("Out of range or no melee weapon equipped");
+            this.messageLog("Out of range or no melee weapon equipped");
         }
          
     },
@@ -1430,11 +1453,14 @@ BaseBlitz.Game.prototype = {
             if (attackRoll >= ac) {
                 console.log(attacker.key + " rolls a " + attackRoll + " vs. AC");
                 console.log(attacker.key + " does " + damageRoll + " points of damage");
+                this.messageLog(attacker.key + " rolls a " + attackRoll + " vs. AC");
+                this.messageLog(attacker.key + " does " + damageRoll + " points of damage");
                 message = "-" + damageRoll;
                 this.hit(defender, damageRoll);
                 this.messageDisplay(attacker, defender, message);
             } else {
                 console.log(attacker.key + " misses!");
+                this.messageLog(attacker.key + " misses!");
                 this.messageDisplay(attacker, defender, "miss!");
             }
         } else {
@@ -1475,6 +1501,7 @@ BaseBlitz.Game.prototype = {
         if (_.indexOf(flankedEnemies, defender) !== -1) {
             modifier += 2;
             console.log("+2 flanking bonus");
+            this.messageLog("+2 flanking bonus");
         }
         
         //half level bonus
@@ -1492,19 +1519,24 @@ BaseBlitz.Game.prototype = {
             if (attackRoll >= ac) {
                 console.log(attacker.key + " rolls a " + attackRoll + " vs. AC");
                 console.log(attacker.key + " does " + damageRoll + " points of damage");
+                this.messageLog(attacker.key + " rolls a " + attackRoll + " vs. AC");
+                this.messageLog(attacker.key + " does " + damageRoll + " points of damage");
                 this.hit(defender, damageRoll);
                 message = "-" + damageRoll;
                 this.messageDisplay(attacker, defender, message)
             } else {
                 console.log(attacker.key + " misses!");
+                this.messageLog(attacker.key + " misses!");
                 this.messageDisplay(attacker, defender, "miss!");
             }
         } else {
             console.log("Out of range or no melee weapon equipped");
+            this.messageLog("Out of range or no melee weapon equipped");
         }        
         
         this.currentPlayer.sheet.defenses.ac += 1;
         console.log(this.currentPlayer.key + " now has an AC of " + this.currentPlayer.sheet.defenses.ac);
+        this.messageLog(this.currentPlayer.key + " now has an AC of " + this.currentPlayer.sheet.defenses.ac);
         
          //functions for end of turn calculations
         function removePlayerBonus () {
@@ -1518,8 +1550,7 @@ BaseBlitz.Game.prototype = {
         //picks the first ally in the list if it exists
         if (this.adjacentAllies(this.currentPlayer).length > 0) {
             
-            ally = this.adjacentAllies(this.currentPlayer)[0];
-            console.log(ally);
+            ally = this.adjacentAllies(this.currentPlayer)[0];            
             ally.sheet.defenses.ac += 1;
             
             function removeAllyBonus () {
