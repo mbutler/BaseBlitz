@@ -112,7 +112,7 @@ BaseBlitz.Game.prototype = {
         //display screen text for 4 seconds announcing current player's turn
         this.HUDNameStyle = { font: "24px Courier", fill: "#00ff00", boundsAlignH: "left", boundsAlignV: "top"};
         this.HUDTextStyle = { font: "12px Courier", fill: "#00ff00", boundsAlignH: "left", boundsAlignV: "top"};
-        this.HUDMessageStyle = { font: "12px Courier", fill: "#00ff00", boundsAlignH: "right", boundsAlignV: "bottom", wordWrap: true, wordWrapWidth: 300};
+        this.HUDMessageStyle = { font: "12px Courier", fill: "#00ff00", boundsAlignH: "right", boundsAlignV: "bottom", wordWrap: true, wordWrapWidth: 500};
         
         this.HUDNameText = this.game.add.text(0, 0, this.currentPlayer.key, this.HUDNameStyle);        
         this.HUDNameText.setTextBounds(this.blackbar.x + 5, this.blackbar.y + 5, 100, 100);
@@ -121,7 +121,7 @@ BaseBlitz.Game.prototype = {
         this.HUDWeaponText.setTextBounds(this.blackbar.x + 5, this.blackbar.y + 30, 100, 100);
         
         this.HUDMessageText = this.game.add.text(0, 0, 'fight!', this.HUDMessageStyle);
-        this.HUDMessageText.setTextBounds(this.game.camera.width - 305, this.blackbar.y, 300, 75);
+        this.HUDMessageText.setTextBounds(this.game.camera.width - 505, this.blackbar.y, 500, 75);
         this.HUDMessageList = ['', '', '', ''];
         
         this.barGroup.add(this.HUDNameText)
@@ -507,7 +507,8 @@ BaseBlitz.Game.prototype = {
                 if (round === this.round) {
                     action = delayList[j].method;
                     //execute the method in this context
-                    action.call(this);                    
+                    action.call(this);
+                    this.messageLog(delayList[j].name + " effects ending for " + delayList[j].player);
                 } else if (round < this.round) {
                     //remove the method from the endOfTurn list
                     _.pull(delayList, delayList[j]);
@@ -1483,66 +1484,23 @@ BaseBlitz.Game.prototype = {
             allyDelayList = [],
             playerDelay = {
                 'round': nextRound,
-                'method': {}
+                'method': {},
+                'name': 'Priests Shield',
+                'player': this.currentPlayer.key
             },
             allyDelay = {
                 'round': nextRound,
-                'method': {}
-            },
-            ac = defender.sheet.defenses.ac,
-            attackerPoint = this.getPoint(attacker),
-            defenderPoint = this.getPoint(defender),
-            weapon = attacker.sheet.slots.mainhand,
-            modifier = attacker.sheet.abilities.str,
-            attackRoll = 0,
-            distance = attackerPoint.distance(defenderPoint, true),
-            damageRoll = this.roll(weapon.damage, attacker.sheet.abilities.str),
-            flankedEnemies = this.flankedEnemies(attacker),
+                'method': {},
+                'name': 'Priests Shield',
+                'player': {}
+            },            
             ally = {},
             message = '';
         
-        //weapon proficiency
-        if (_.indexOf(attacker.sheet.weaponProf, weapon.category) !== -1) {
-            modifier += weapon.prof;
-        }
+        //make weapon attack
+        this.meleeBasic(attacker, defender);     
         
-        //flanking combat advantage
-        if (_.indexOf(flankedEnemies, defender) !== -1) {
-            modifier += 2;
-            console.log("+2 flanking bonus");
-            this.messageLog(defender.key + " is flanked");
-        }
-        
-        //half level bonus
-        modifier += _.floor(attacker.sheet.level / 2);
-        
-        //other attack mods
-        modifier += attacker.sheet.miscAttackMod;
-               
-        attackRoll = this.roll('1d20', modifier);
-        
-        //any misc damage
-        damageRoll += attacker.sheet.miscDamageMod;
-        
-        if (distance <= attacker.sheet.reach && (_.isArray(weapon.range) === false)) {
-            if (attackRoll >= ac) {
-                console.log(attacker.key + " rolls a " + attackRoll + " vs. AC");
-                console.log(attacker.key + " does " + damageRoll + " points of damage");
-                this.messageLog(attacker.key + " rolls a " + attackRoll + " vs. AC");
-                this.messageLog(attacker.key + " does " + damageRoll + " points of damage");
-                this.hit(defender, damageRoll);
-                message = "-" + damageRoll;
-                this.messageDisplay(attacker, defender, message)
-            } else {
-                console.log(attacker.key + " misses!");
-                this.messageLog(attacker.key + " misses!");
-                this.messageDisplay(attacker, defender, "miss!");
-            }
-        } else {
-            console.log("Out of range or no melee weapon equipped");
-            this.messageLog("Out of range or no melee weapon equipped");
-        }        
-        
+        //give AC bonus to current player
         this.currentPlayer.sheet.defenses.ac += 1;
         console.log(this.currentPlayer.key + " now has an AC of " + this.currentPlayer.sheet.defenses.ac);
         this.messageLog(this.currentPlayer.key + " now has an AC of " + this.currentPlayer.sheet.defenses.ac);
@@ -1562,10 +1520,14 @@ BaseBlitz.Game.prototype = {
             ally = this.adjacentAllies(this.currentPlayer)[0];            
             ally.sheet.defenses.ac += 1;
             
+            console.log(ally.key + " now has an AC of " + this.currentPlayer.sheet.defenses.ac);
+            this.messageLog(ally.key + " now has an AC of " + this.currentPlayer.sheet.defenses.ac);
+            
             function removeAllyBonus () {
                 ally.sheet.defenses.ac -= 1;
             }
             
+            allyDelay.player = ally.key;
             allyDelay.method = removeAllyBonus;             
             playerDelayList.push(allyDelay);
             
