@@ -45,19 +45,19 @@ var sheet = {
                 weakened: false
             },
             slots: {
-                armor: '',
-                mainhand: '',
-                offhand: '',
-                leftring: '',
-                rightring: '',
-                arms: '',
-                head: '',
-                feet: '',
-                hands: '',
-                neck: '',
-                waist: '',
-                tattoo: '',
-                kifocus: ''
+                armor: {},
+                mainhand: {},
+                offhand: {},
+                leftring: {},
+                rightring: {},
+                arms: {},
+                head: {},
+                feet: {},
+                hands: {},
+                neck: {},
+                waist: {},
+                tattoo: {},
+                kifocus: {}
             },
             skills: {
                 acrobatics: 0,
@@ -128,7 +128,7 @@ var pregen1 = {
             hp: 27,
             bloodiedval: 13,
             defenses: {
-                ac: 18,
+                ac: 0,
                 fort: 16,
                 will: 12,
                 ref: 15
@@ -170,19 +170,19 @@ var pregen1 = {
                 weakened: false
             },
             slots: {
-                armor: 'plate',
-                mainhand: '',
-                offhand: '',
-                leftring: '',
-                rightring: '',
-                arms: '',
-                head: '',
-                feet: '',
-                hands: '',
-                neck: '',
-                waist: '',
-                tattoo: '',
-                kifocus: ''
+                armor: {},
+                mainhand: {},
+                offhand: {},
+                leftring: {},
+                rightring: {},
+                arms: {},
+                head: {},
+                feet: {},
+                hands: {},
+                neck: {},
+                waist: {},
+                tattoo: {},
+                kifocus: {}
             },
             skills: {
                 acrobatics: 0,
@@ -253,7 +253,7 @@ var pregen2 = {
             hp: 23,
             bloodiedval: 11,
             defenses: {
-                ac: 16,
+                ac: 0,
                 fort: 14,
                 will: 15,
                 ref: 14
@@ -295,19 +295,19 @@ var pregen2 = {
                 weakened: false
             },
             slots: {
-                armor: 'cloth',
-                mainhand: 'none',
-                offhand: '',
-                leftring: '',
-                rightring: '',
-                arms: '',
-                head: '',
-                feet: '',
-                hands: '',
-                neck: '',
-                waist: '',
-                tattoo: '',
-                kifocus: ''
+                armor: {},
+                mainhand: {},
+                offhand: {},
+                leftring: {},
+                rightring: {},
+                arms: {},
+                head: {},
+                feet: {},
+                hands: {},
+                neck: {},
+                waist: {},
+                tattoo: {},
+                kifocus: {}
             },
             skills: {
                 acrobatics: 11,

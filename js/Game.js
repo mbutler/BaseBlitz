@@ -15,7 +15,6 @@ BaseBlitz.Game.prototype = {
         
         //create tilemap and set up layers
         this.map = this.game.add.tilemap('map1');
-        console.log(this.map.width);
         this.map.addTilesetImage('8x3-stone', '8x3-stone');
         this.backgroundlayer = this.map.createLayer('backgroundLayer');
         this.backgroundlayer.resizeWorld();
@@ -32,41 +31,67 @@ BaseBlitz.Game.prototype = {
         this.newRound.add(this.roundStart, this, 0);
         
         this.round = 0;
+        
+        //function () {var ac = 10 + _.floor(this.level / 2) + this.slots.armor.bonus + this.slots.offhand.bonus + Math.max(this.abilities.dex, this.abilities.int); return ac}
     
         //heroes
         this.hero1 = this.game.add.sprite(75 * 1, 75 * 1, 'Jingleboots');
         this.hero1.sheet = _.cloneDeep(pregen1);
         this.hero1.sheet.slots.mainhand = _.clone(weapons.greataxe);
+        this.hero1.sheet.slots.armor = _.clone(armor.leather);
+        this.hero1.sheet.slots.offhand = _.clone(armor.lightshield);
+        this.hero1.sheet.defenses.ac = this.getAc(this.hero1);
+        
         this.hero2 = this.game.add.sprite(75 * 1, 75 * 3, 'Rattlesocks');
         this.hero2.sheet = _.cloneDeep(pregen1);
         this.hero2.sheet.slots.mainhand = _.clone(weapons.greataxe);
+        this.hero2.sheet.slots.armor = _.clone(armor.leather);
+        this.hero2.sheet.defenses.ac = this.getAc(this.hero2);
+        
         this.hero3 = this.game.add.sprite(75 * 2, 75 * 2, 'Scoopercram');
         this.hero3.sheet = _.cloneDeep(pregen1);
         this.hero3.sheet.slots.mainhand = _.clone(weapons.greataxe);
+        this.hero3.sheet.slots.armor = _.clone(armor.leather);
+        this.hero3.sheet.defenses.ac = this.getAc(this.hero3);
+        
         this.hero4 = this.game.add.sprite(75 * 3, 75 * 3, 'Jumperstomp');
         this.hero4.sheet = _.cloneDeep(pregen1);
         this.hero4.sheet.slots.mainhand = _.clone(weapons.greataxe);
+        this.hero4.sheet.slots.armor = _.clone(armor.plate);
+        this.hero4.sheet.defenses.ac = this.getAc(this.hero4);
+        
         this.heroes = [this.hero1, this.hero2, this.hero3, this.hero4];
         
         //monsters
         this.monster1 = this.game.add.sprite(75 * 6, 75 * 9, 'Spider');
         this.monster1.sheet = _.cloneDeep(pregen2);
         this.monster1.sheet.slots.mainhand = _.clone(weapons.dagger);
+        this.monster1.sheet.slots.armor = _.clone(armor.leather);
+        this.monster1.sheet.defenses.ac = this.getAc(this.monster1);
+        
         this.monster2 = this.game.add.sprite(75 * 8, 75 * 8, 'Golem');
         this.monster2.sheet = _.cloneDeep(pregen2);
         this.monster2.sheet.slots.mainhand = _.clone(weapons.club);
+        this.monster2.sheet.slots.armor = _.clone(armor.leather);
+        this.monster2.sheet.defenses.ac = this.getAc(this.monster2);
+        
         this.monster3 = this.game.add.sprite(75 * 9, 75 * 9, 'Fungus');
         this.monster3.sheet = _.cloneDeep(pregen2);
         this.monster3.sheet.slots.mainhand = _.clone(weapons.greataxe);
+        this.monster3.sheet.slots.armor = _.clone(armor.leather);
+        this.monster3.sheet.defenses.ac = this.getAc(this.monster3);
+        
         this.monster4 = this.game.add.sprite(75 * 6, 75 * 7, 'Blindheim');
         this.monster4.sheet = _.cloneDeep(pregen2);
         this.monster4.sheet.slots.mainhand = _.clone(weapons.crossbow);
+        this.monster4.sheet.slots.armor = _.clone(armor.leather);
+        this.monster4.sheet.defenses.ac = this.getAc(this.monster4);
+        
         this.monsters = [this.monster1, this.monster2, this.monster3, this.monster4];  
         
         //reduce heroes and monsters into list of all players
         this.players = _.concat(this.heroes, this.monsters);
         this.playerGroup = this.game.add.group();
-        //this.playerGroup.add(this.hero1, this.hero2, this.hero3, this.hero4, this.monster1, this.monster2, this.monster3, this.monster4);
         
         this.standard = {
             meleeBasic: {
@@ -109,7 +134,7 @@ BaseBlitz.Game.prototype = {
         this.barGroup.fixedToCamera = true;
         this.blackbar.width = this.game.camera.width;
         
-        //display screen text for 4 seconds announcing current player's turn
+        //the HUD
         this.HUDNameStyle = { font: "24px Courier", fill: "#00ff00", boundsAlignH: "left", boundsAlignV: "top"};
         this.HUDTextStyle = { font: "12px Courier", fill: "#00ff00", boundsAlignH: "left", boundsAlignV: "top"};
         this.HUDMessageStyle = { font: "12px Courier", fill: "#00ff00", boundsAlignH: "right", boundsAlignV: "bottom", wordWrap: true, wordWrapWidth: 500};
@@ -120,6 +145,9 @@ BaseBlitz.Game.prototype = {
         this.HUDWeaponText = this.game.add.text(0, 0, this.currentPlayer.sheet.slots.mainhand.name, this.HUDTextStyle);
         this.HUDWeaponText.setTextBounds(this.blackbar.x + 5, this.blackbar.y + 30, 100, 100);
         
+        this.HUDArmorText = this.game.add.text(0, 0, this.currentPlayer.sheet.slots.armor.name + ' (AC: ' + this.currentPlayer.sheet.defenses.ac +')', this.HUDTextStyle);
+        this.HUDArmorText.setTextBounds(this.blackbar.x + 5, this.blackbar.y + 45, 100, 100);
+        
         this.HUDMessageText = this.game.add.text(0, 0, 'fight!', this.HUDMessageStyle);
         this.HUDMessageText.setTextBounds(this.game.camera.width - 505, this.blackbar.y, 500, 75);
         this.HUDMessageList = ['', '', '', ''];
@@ -127,7 +155,7 @@ BaseBlitz.Game.prototype = {
         this.barGroup.add(this.HUDNameText)
         this.barGroup.add(this.HUDWeaponText);
         this.barGroup.add(this.HUDMessageText);
-        //this.game.time.events.add(Phaser.Timer.SECOND, textDestroy, this);
+        this.barGroup.add(this.HUDArmorText);
           
         //start the round and turn
         this.newRound.dispatch();
@@ -179,10 +207,24 @@ BaseBlitz.Game.prototype = {
         console.log(this.adjacentAllies(this.currentPlayer));
     },
     
+    getAc: function (player) {
+        var ac = 10 + _.floor(player.sheet.level / 2) + player.sheet.slots.armor.bonus + Math.max(player.sheet.abilities.dex, player.sheet.abilities.int);
+        
+        if (_.includes(player.sheet.slots.offhand.type, 'shield')) {
+            ac += player.sheet.slots.offhand.bonus;
+        }
+        
+        //set other stats here too 
+        player.sheet.speed += player.sheet.slots.armor.speed;
+                
+        return ac;
+    },
+    
     //sets the character info in the HUD
     hudUpdate: function () {
         this.HUDNameText.setText(this.currentPlayer.key);
         this.HUDWeaponText.setText(this.currentPlayer.sheet.slots.mainhand.name);
+        this.HUDArmorText.setText(this.currentPlayer.sheet.slots.armor.name + ' (AC: ' + this.currentPlayer.sheet.defenses.ac +')');
     },
     
     //displays the message log window
@@ -1456,6 +1498,8 @@ BaseBlitz.Game.prototype = {
                 this.messageLog(defender.key + " has cover");
             } else if (cover === -5) {
                 this.messageLog(defender.key + " has superior cover");
+            } else if (cover === -99) {
+                this.messageLog("No line of sight. Shot blocked.");
             }
             
             
@@ -1470,7 +1514,9 @@ BaseBlitz.Game.prototype = {
                 this.messageDisplay(attacker, defender, message);
             } else {
                 console.log(attacker.key + " misses!");
-                this.messageLog(attacker.key + " rolls a " + attackRoll + " and misses");
+                if (cover !== -99) {
+                   this.messageLog(attacker.key + " rolls a " + attackRoll + " and misses"); 
+                }                
                 this.messageDisplay(attacker, defender, "miss!");
             }
         } else {
