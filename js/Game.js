@@ -150,12 +150,16 @@ BaseBlitz.Game.prototype = {
         
         this.HUDMessageText = this.game.add.text(0, 0, 'fight!', this.HUDMessageStyle);
         this.HUDMessageText.setTextBounds(this.game.camera.width - 505, this.blackbar.y, 500, 75);
-        this.HUDMessageList = ['', '', '', ''];
+        this.HUDMessageList = ['', '', '', '']; 
+        
+        this.HUDPowerText = this.game.add.text(0, 0, '', this.HUDMessageStyle);
+        this.HUDPowerText.setTextBounds(this.blackbar.x + 75, this.blackbar.y + 5, 300, 75);
         
         this.barGroup.add(this.HUDNameText)
         this.barGroup.add(this.HUDWeaponText);
         this.barGroup.add(this.HUDMessageText);
         this.barGroup.add(this.HUDArmorText);
+        this.barGroup.add(this.HUDPowerText);
           
         //start the round and turn
         this.newRound.dispatch();
@@ -195,7 +199,7 @@ BaseBlitz.Game.prototype = {
                           
         this.keyD.onDown.add(this.debug, this);
         this.keyE.onDown.add(this.turnEnd, this);
-        this.keyS.onDown.add(this.standardAction, this);
+        this.keyS.onDown.add(this.powerOptions, this);
         this.keyM.onDown.add(this.minorAction, this);
         this.keyV.onDown.add(this.moveAction, this);
         
@@ -204,7 +208,7 @@ BaseBlitz.Game.prototype = {
     
     //varous testing things
     debug: function () {
-        console.log(this.adjacentAllies(this.currentPlayer));
+        console.log(this);
     },
     
     getAc: function (player) {
@@ -231,9 +235,50 @@ BaseBlitz.Game.prototype = {
     messageLog: function (message) {
         var line = [];
         this.HUDMessageList.push(message);
-        line = _.takeRight(this.HUDMessageList, 4);
-        
+        line = _.takeRight(this.HUDMessageList, 4);        
         this.HUDMessageText.setText(line[0] + '\n' + line[1] + '\n' + line[2] + '\n' + line[3]);
+    },
+    
+    powerOptions: function () {
+        var i = 0,
+            output = '',
+            names = [],
+            powerList = [],
+            attack = undefined;
+        
+        //get all the names of the powers in the standard action list
+        names = _.mapValues(this.standard, 'name');
+        _.forOwn(names, function(value, key) {
+          powerList.push(value);
+        });
+        
+        //build the display list of standard action power names
+        for (i = 0; i < powerList.length; i += 1) {
+            output += 'F' + (i + 1) + ')' + powerList[i] + '\n';
+        }; 
+        
+        this.HUDPowerText.setText(output);        
+        
+        this.keyF1 = this.game.input.keyboard.addKey(Phaser.KeyCode.F1);
+        this.keyF2 = this.game.input.keyboard.addKey(Phaser.KeyCode.F2);
+        this.keyF3 = this.game.input.keyboard.addKey(Phaser.KeyCode.F3);
+        
+        this.keyF1.onDown.add(functionKeys, this);
+        this.keyF2.onDown.add(functionKeys, this);
+        this.keyF3.onDown.add(functionKeys, this);
+        
+        function functionKeys (context) {
+            
+            //grab function key name pressed, take second character and turn into number
+            attack = parseInt(context.event.code.charAt(1));
+            //make work with array indexing
+            attack -= 1;
+            selection = powerList[attack];
+            //get the power of the selected power name
+            power = _.filter(this.standard, {'name': selection});
+            this.standardAction(power, attack);
+        }
+        
     },
     
     //destroys a sprite and removes it from initiative, player list, and appropriate team
@@ -387,7 +432,7 @@ BaseBlitz.Game.prototype = {
         // algebraic quadrant numbers, i.e. upper right corner is number 1
         switch (attackCorner) {
             case 1:
-                ax = 76;
+                ax = 75;
                 ay = 0;
                 break;
             case 2:
@@ -396,17 +441,17 @@ BaseBlitz.Game.prototype = {
                 break;
             case 3:
                 ax = 0;
-                ay = 76;
+                ay = 75;
                 break;
             case 4:
-                ax = 76;
-                ay = 76;
+                ax = 75;
+                ay = 75;
                 break;
         }
             
         switch (defendCorner) {
             case 1:
-                dx = 76;
+                dx = 75;
                 dy = 0;
                 break;
             case 2:
@@ -415,11 +460,11 @@ BaseBlitz.Game.prototype = {
                 break;
             case 3:
                 dx = 0;
-                dy = 76;
+                dy = 75;
                 break;
             case 4:
-                dx = 76;
-                dy = 76;
+                dx = 75;
+                dy = 75;
                 break;
         }
         
@@ -479,6 +524,8 @@ BaseBlitz.Game.prototype = {
             style = {},
             message = '';
         
+        this.HUDPowerText.setText('');
+        
         //reset actions
         this.currentPlayer.sheet.metadata.actions = [[1,1,1],[1,0,2],[0,2,1],[0,1,2],[0,0,3]];
         
@@ -530,7 +577,7 @@ BaseBlitz.Game.prototype = {
         this.keyJ.onDown.remove(this.move, this, 0, 'player');
         this.keyK.onDown.remove(this.move, this, 0, 'player');
         this.keyL.onDown.remove(this.move, this, 0, 'player');
-        this.keyS.onDown.add(this.standardAction, this);
+        this.keyS.onDown.add(this.powerOptions, this);
         this.keyM.onDown.add(this.minorAction, this);
         this.keyV.onDown.add(this.moveAction, this);
         
@@ -585,7 +632,7 @@ BaseBlitz.Game.prototype = {
         style = { font: "bold 48px Arial", fill: "#ff0000", boundsAlignH: "center", boundsAlignV: "middle", stroke: "#000", strokeThickness: 4 };
         camX = (this.game.camera.width / 2) + this.game.camera.view.x;
         camY = (this.game.camera.height / 2) + this.game.camera.view.y;
-        text = this.game.add.text(camX, camY, message, style);
+        text = this.game.add.text(camX, camY - 75, message, style);
         text.anchor.setTo(0.5, 0.5);
 
         this.game.time.events.add(Phaser.Timer.SECOND * 3, textDestroy, this);
@@ -596,33 +643,15 @@ BaseBlitz.Game.prototype = {
     },
     
     //handles taking standard action
-    standardAction: function () {
-        var attack = 0,
-            name = {},
+    standardAction: function (power, attack) {
+        var name = {},
             powerList = [],
             i = 0,
             output = '',
-            selection = '',
-            power = {},
-            weapon = this.currentPlayer.sheet.slots.mainhand; 
+            selection = '',           
+            weapon = this.currentPlayer.sheet.slots.mainhand;
         
-        //get all the names of the powers in the standard action list
-        names = _.mapValues(this.standard, 'name');
-        _.forOwn(names, function(value, key) {
-          powerList.push(value);
-        });
-        
-        //build the display list of standard action power names
-        for (i = 0; i < powerList.length; i += 1) {
-            output += i+')'+powerList[i]+'\n';
-        };
-        
-        //uses prompt for now
-        attack = prompt("Choose an action:\n"+output);
-        selection = powerList[attack];
-        //get the power of the selected power name
-        power = _.filter(this.standard, {'name': selection});
-        //weapon.category[1] === power[0].type
+        this.HUDPowerText.setText('');
         
         //use the action and update character sheet with last action. make sure attack and weapon 
         if (attack != null) {
@@ -811,6 +840,8 @@ BaseBlitz.Game.prototype = {
             return enemies[j];
         } else {
             console.log("No valid targets");
+            this.messageLog("No valid targets");
+            return;
         }
         
         
@@ -1472,6 +1503,9 @@ BaseBlitz.Game.prototype = {
             cover = 0,
             distance = attackerPoint.distance(defenderPoint, true),
             message = '';
+        
+        //opportunity attack
+        this.opportunityAttack(attacker);
         
         //weapon proficiency
         if (_.indexOf(attacker.sheet.weaponProf, weapon.category) !== -1) {
