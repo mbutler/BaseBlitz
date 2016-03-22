@@ -208,7 +208,7 @@ BaseBlitz.Game.prototype = {
     
     //varous testing things
     debug: function () {
-        console.log(this);
+        console.log(this.burst(this.getPoint(this.currentPlayer), 2));
     },
     
     getAc: function (player) {
@@ -1102,6 +1102,22 @@ BaseBlitz.Game.prototype = {
             return point;
         }
             
+    },
+    
+    //returns an array of points of "burst n" squares away from an origin point
+    burst: function (origin, squares) {
+        var directions = ['N', 'E', 'S', 'W', 'NW', 'NE', 'SE', 'SW'],
+            pointList = [],
+            i = 0,
+            j = 0;
+        
+        for (i = 0; i < directions.length; i += 1) {
+            for (j = 1; j <= squares; j += 1) {
+                pointList.push(this.lookAhead(origin, directions[i], j));
+            }
+        }
+        
+        return pointList;
     },
     
     //creates a group of sprites from the map
